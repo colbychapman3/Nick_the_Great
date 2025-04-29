@@ -1,0 +1,28 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../../../../Downloads/abacus_ai_optimized_frameworks"
+        }
+    ],
+    "settings": {
+        "editor.wordWrap": "on",
+        "markdown.preview.breaks": true,
+        "markdown.extension.toc.levels": "2..6",
+        "markdown.extension.preview.autoShowPreviewToSide": true,
+        "cline.chromeExecutablePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "cline.modelSettings.o3Mini.reasoningEffort": "high",
+        "cline.vsCodeLmModelSelector": {
+            
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "yzhang.markdown-all-in-one",
+            "davidanson.vscode-markdownlint",
+            "bierner.markdown-preview-github-styles"
+        ]
+    }
+}

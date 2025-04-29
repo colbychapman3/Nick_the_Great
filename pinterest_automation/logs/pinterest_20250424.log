@@ -1,0 +1,54 @@
+2025-04-24 00:32:39 [INFO] root: Logging to file: C:\Users\colby\Documents\Manus Downloads\Nick the Great\Nick_the_Great\pinterest_automation\logs\pinterest_20250424.log
+2025-04-24 00:32:39 [INFO] __main__: Starting Pinterest automation...
+2025-04-24 00:32:39 [INFO] __main__: Pinterest API Configuration:
+  API URL: https://api.pinterest.com/v5
+  App ID: ********here
+  Boards: board_id_1, board_id_2
+  Pin Creation Schedule: 0 9 * * *
+  Analytics Collection Schedule: 0 5 * * *
+  Max Pins Per Day: 5
+
+2025-04-24 00:32:39 [INFO] __main__: This is a test info message
+2025-04-24 00:32:39 [WARNING] __main__: This is a test warning message
+2025-04-24 00:32:39 [ERROR] __main__: This is a test error message
+2025-04-24 00:32:39 [CRITICAL] __main__: This is a test critical message
+2025-04-24 00:32:39 [ERROR] src.api.auth: Failed to refresh access token: 401 Client Error: Unauthorized for url: https://api.pinterest.com/v5/oauth/token
+2025-04-24 00:32:39 [WARNING] __main__: Not authorized with Pinterest API. Please run the authorization flow.
+2025-04-24 00:32:39 [INFO] apscheduler.scheduler: Scheduler started
+2025-04-24 00:32:39 [INFO] __main__: Pinterest automation running...
+2025-04-24 00:38:47 [INFO] root: Logging to file: C:\Users\colby\Documents\Manus Downloads\Nick the Great\Nick_the_Great\pinterest_automation\logs\pinterest_20250424.log
+2025-04-24 00:38:47 [INFO] __main__: Starting Pinterest automation...
+2025-04-24 00:38:47 [INFO] __main__: Pinterest API Configuration:
+  API URL: https://api.pinterest.com/v5
+  App ID: ********here
+  Boards: board_id_1, board_id_2
+  Pin Creation Schedule: 0 9 * * *
+  Analytics Collection Schedule: 0 5 * * *
+  Max Pins Per Day: 5
+
+2025-04-24 00:38:47 [INFO] __main__: This is a test info message
+2025-04-24 00:38:47 [WARNING] __main__: This is a test warning message
+2025-04-24 00:38:47 [ERROR] __main__: This is a test error message
+2025-04-24 00:38:47 [CRITICAL] __main__: This is a test critical message
+2025-04-24 00:38:48 [ERROR] src.api.auth: Failed to refresh access token: 401 Client Error: Unauthorized for url: https://api.pinterest.com/v5/oauth/token
+2025-04-24 00:38:48 [WARNING] __main__: Not authorized with Pinterest API. Please run the authorization flow.
+2025-04-24 00:38:48 [INFO] __main__: Please visit the following URL to authorize the application:
+https://www.pinterest.com/oauth/authorize?client_id=your_app_id_here&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&response_type=code&scope=pins%3Aread%2Cpins%3Awrite%2Cboards%3Aread%2Cboards%3Awrite%2Cuser_accounts%3Aread
+2025-04-24 00:40:51 [INFO] root: Logging to file: C:\Users\colby\Documents\Manus Downloads\Nick the Great\Nick_the_Great\pinterest_automation\logs\pinterest_20250424.log
+2025-04-24 00:40:51 [INFO] __main__: Starting Pinterest automation...
+2025-04-24 00:40:51 [INFO] __main__: Pinterest API Configuration:
+  API URL: https://api.pinterest.com/v5
+  App ID: ********8892
+  Boards: board_id_1, board_id_2
+  Pin Creation Schedule: 0 9 * * *
+  Analytics Collection Schedule: 0 5 * * *
+  Max Pins Per Day: 5
+
+2025-04-24 00:40:51 [INFO] __main__: This is a test info message
+2025-04-24 00:40:51 [WARNING] __main__: This is a test warning message
+2025-04-24 00:40:51 [ERROR] __main__: This is a test error message
+2025-04-24 00:40:51 [CRITICAL] __main__: This is a test critical message
+2025-04-24 00:40:51 [ERROR] src.api.auth: Failed to refresh access token: 401 Client Error: Unauthorized for url: https://api.pinterest.com/v5/oauth/token
+2025-04-24 00:40:51 [WARNING] __main__: Not authorized with Pinterest API. Please run the authorization flow.
+2025-04-24 00:40:51 [INFO] __main__: Please visit the following URL to authorize the application:
+https://www.pinterest.com/oauth/authorize?client_id=1518892&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&response_type=code&scope=pins%3Aread%2Cpins%3Awrite%2Cboards%3Aread%2Cboards%3Awrite%2Cuser_accounts%3Aread

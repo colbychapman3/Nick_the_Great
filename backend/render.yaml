@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: nick-the-great-api
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: JWT_SECRET
+        value: replace_with_secure_secret
+      - key: GEMINI_API_KEY
+        value: AIzaSyDvW-t7LRH3XtvKfcC8zAtLBYpEhaA4z_k
+      - key: MONGODB_URI
+        value: mongodb+srv://<username>:<password>@<cluster>.mongodb.net/nick_agent

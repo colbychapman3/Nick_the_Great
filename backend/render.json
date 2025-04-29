@@ -1,0 +1,15 @@
+# Render.com Deployment Configuration
+# This file configures the backend deployment to Render.com
+
+{
+  "name": "nick-the-great-api",
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "10000",
+    "JWT_SECRET": "replace_with_secure_secret",
+    "GEMINI_API_KEY": "AIzaSyDvW-t7LRH3XtvKfcC8zAtLBYpEhaA4z_k",
+    "MONGODB_URI": "mongodb+srv://<username>:<password>@<cluster>.mongodb.net/nick_agent"
+  },
+  "buildCommand": "cd backend && npm install",
+  "startCommand": "cd backend && node src/index.js"
+}

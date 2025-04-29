@@ -1,0 +1,205 @@
+# Experiment: AI-Driven Niche Ebooks
+
+## Experiment ID: EXP003
+**Start Date:** [Pending]  
+**Status:** Planning  
+**Current Phase:** Setup
+
+## Business Hypothesis
+
+**Core Hypothesis:** Creating and selling targeted niche ebooks can generate passive income with minimal ongoing time investment by leveraging AI for content creation and low-cost publishing platforms.
+
+**Key Assumptions:**
+1. We can identify profitable niche topics with high search interest but low competition
+2. AI can generate high-quality, valuable ebook content that customers will pay for
+3. Self-publishing platforms like Amazon KDP, Gumroad, and Leanpub can be used without upfront investment
+4. Basic but professional ebook covers can be created using free tools like Canva
+5. Cross-promotion with other Phase 0 experiments will enhance visibility and sales
+
+**Success Prediction:** This experiment will be successful if it generates positive passive income (at least $50/month) within 2 months, with a Return on Time Invested (ROTI) of at least $15/hr.
+
+## Business Model Overview
+
+**Category:** Digital Product
+
+**Value Proposition:** Comprehensive, well-researched information products that solve specific problems or answer critical questions for niche audiences, delivered in a convenient, accessible format.
+
+**Revenue Mechanism:** Direct sales of ebooks through multiple platforms:
+- Amazon KDP (70% royalty)
+- Gumroad (95% royalty minus fees)
+- Leanpub (80% royalty)
+
+**Target Audience:** Individuals seeking specific knowledge in underserved niche topics who:
+- Have demonstrated willingness to pay for information
+- Prefer organized, comprehensive resources over fragmented free content
+- Have immediate needs or problems to solve
+
+**Competitive Advantage:** 
+- AI-powered comprehensive research capability allowing for greater depth and breadth than typical solo authors
+- Ability to rapidly produce multiple titles across diverse niches
+- Strategic topic selection based on data-driven market analysis
+- Cross-promotion with other Phase 0 experiments for enhanced visibility
+
+## Required Platforms & Resources
+
+**Primary Platform:** Amazon Kindle Direct Publishing (KDP)
+
+**Additional Platforms:** 
+- Gumroad
+- Leanpub
+- Personal social media accounts for promotion
+- Pinterest (leveraging EXP004)
+
+**AI Resources Required:**
+- Topic research and competitive analysis
+- Content outlining and structuring
+- Content generation and drafting
+- Cover design concept generation
+- Marketing copy creation
+- Keyword identification
+
+**Human Resources Required:**
+- Final topic selection and validation
+- Content review, editing, and quality assurance
+- Cover design finalization in Canva
+- Platform account setup and management
+- Ebook formatting and publishing
+- Basic promotion and cross-promotion activities
+
+**Additional Resources:**
+- Canva free tier for cover design
+- Basic word processing software for formatting
+- PDF creation tools
+
+## Implementation Plan
+
+### Setup Phase
+
+**AI Tasks:**
+1. Research and identify 10-15 potential profitable niche topics with specific audience needs
+2. Analyze competition for each potential topic (volume of existing books, pricing, reviews)
+3. Create content outline for 3 most promising topics
+4. Draft preliminary content sections for chosen initial topic
+5. Generate cover design concepts and marketing copy
+
+**Human Tasks:**
+1. Create accounts on Amazon KDP, Gumroad, and Leanpub
+2. Review AI-identified niche topics and make final selection
+3. Review and refine content outline and structure
+4. Create ebook cover using Canva based on AI concepts
+5. Set up ebook templates and formatting guidelines
+
+**Setup Completion Criteria:** Accounts created, initial ebook topic selected with comprehensive outline approved, content creation process established, cover template created.
+
+### Execution Phase
+
+**Regular AI Tasks:**
+1. Generate content sections according to outline (daily)
+2. Research specific sections requiring factual information (as needed)
+3. Create promotional content for social media/Pinterest (weekly)
+4. Analyze keywords and categories for platform optimization (per book)
+5. Generate ideas for future ebook topics based on market trends (biweekly)
+
+**Regular Human Tasks:**
+1. Review and edit AI-generated content (15-20 min daily)
+2. Format and prepare ebook for publication (2-3 hours per book)
+3. Publish ebook to selected platforms (1-2 hours per book)
+4. Implement basic promotion activities (10-15 min daily)
+5. Monitor sales and review metrics (weekly)
+
+**Execution Timeline:**
+- Week 1: Complete research and topic selection
+- Week 2: Content creation and editing
+- Week 3: Formatting, final review, and publication
+- Week 4: Promotion and beginning of second ebook
+
+## Metrics & Tracking
+
+**Primary Success Metric:** Return on Time Invested (ROTI) - Revenue generated divided by total hours of human time invested
+
+**Secondary Metrics:**
+1. Number of ebooks sold per platform (daily/weekly/monthly)
+2. Revenue per platform (daily/weekly/monthly)
+3. Customer reviews and ratings (average score)
+4. Email list growth from ebook buyers
+
+**Lead Indicators:**
+- Initial sales within first week of publication
+- Social media/Pinterest engagement with promotional content
+- Click-through rates from promotion to sales pages
+- Browse-to-buy ratio on Amazon
+
+**Tracking Method:** Central spreadsheet with daily updates on sales, revenue, time investment, and platform performance
+
+**Review Schedule:**
+- Daily: Quick check of sales, reviews, and basic metrics
+- Weekly: Comprehensive review of all metrics and adjustment planning
+- Monthly: In-depth analysis with comparison to other Phase 0 experiments
+
+## Resource Allocation
+
+**Initial Time Investment:**
+- AI: 2-3 hours per day (largely automated)
+- Human: 15-30 minutes per day + 3-4 hours for initial setup
+
+**Expected Evolution:**
+- Human time will decrease for subsequent ebooks as templates and processes are established
+- Initial surge of time required during publication weeks
+- More time shifted to marketing as catalog grows
+
+**Maximum Resource Allocation:**
+- Human time not to exceed 5 hours per week during steady state
+- If time requirements consistently exceed 5 hours per week without corresponding revenue increase, reevaluate approach
+
+## Decision Framework
+
+**Continuation Criteria:**
+- ROTI of at least $10/hr after first ebook
+- Positive sales trend (week-over-week growth)
+- At least 3-star average reviews
+
+**Scaling Triggers:**
+- ROTI exceeds $15/hr consistently
+- Cross-promotion showing significant impact
+- Specific niche showing exceptional performance
+
+**Adjustment Triggers:**
+- No sales within first 10 days of publication
+- Average review rating below 3.5 stars
+- ROTI below $8/hr after first month
+
+**Termination Criteria:**
+- ROTI below $5/hr after 2 months of effort
+- Inability to produce quality content that satisfies customers (evidenced by reviews)
+- Consistent downward trend in sales despite adjustments
+
+## Current Status & Notes
+
+**Current Status Summary:**
+Planning phase. Researching potential niche topics and setting up publishing platform accounts.
+
+**Key Learnings:**
+- [To be filled as experiment progresses]
+
+**Recent Changes:**
+- [To be filled as experiment progresses]
+
+**Blockers/Issues:**
+- Need to create accounts on publishing platforms
+- Need to establish exact workflow between AI content generation and human editing
+
+**Opportunities:**
+- Potential to leverage freelance writing services (EXP001) for content creation efficiency
+- Pinterest strategy (EXP004) could significantly enhance visibility
+- Digital templates (EXP003) could share design elements and themes
+
+---
+
+## Status Log
+
+### [Date]
+**Status:** Planning  
+**Metrics:** N/A  
+**Changes Made:** Initial experiment file created  
+**Notes:** Preparing for setup phase  
+**Next Steps:** Research niche topics and set up publishing accounts
