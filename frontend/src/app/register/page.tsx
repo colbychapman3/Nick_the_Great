@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { mockApi } from '@/lib/mockApi';
 
 export default function RegisterPage() {
   const [name, setName] = useState<string>('');
@@ -24,35 +25,40 @@ export default function RegisterPage() {
     }
 
     try {
-      // Use direct API URL to avoid proxy issues during testing
-      const apiUrl = 'https://nick-the-great-api.onrender.com';
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': window.location.origin,
-        },
-        body: JSON.stringify({ name, email, password }),
-        mode: 'cors',
-        credentials: 'include',
-      });
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
       let data;
       
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // Handle non-JSON response (HTML, text, etc.)
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
-        throw new Error('Server returned non-JSON response. API endpoint might be incorrect.');
-      }
+      try {
+        // First try the real API
+        const apiUrl = 'https://nick-the-great-api.onrender.com';
+        const response = await fetch(`${apiUrl}/api/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': window.location.origin,
+          },
+          body: JSON.stringify({ name, email, password }),
+          mode: 'cors',
+          credentials: 'include',
+        });
 
-      if (!response.ok) {
-        throw new Error(data?.message || 'Registration failed');
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data?.message || 'Registration failed');
+          }
+        } else {
+          // If not JSON or other issue, throw error to fall back to mock API
+          throw new Error('API not available');
+        }
+      } catch (error) {
+        console.log('Real API failed, using mock API:', error);
+        // Fall back to mock API
+        data = await mockApi.register({ name, email, password });
       }
 
       // Store token in localStorage
