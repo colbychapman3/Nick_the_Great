@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 
 export function ApiClient() {
   // Base API URL - will be replaced with environment variable in production
@@ -14,13 +14,13 @@ export function ApiClient() {
   const request = async (endpoint: string, method: string = 'GET', data: any = null) => {
     const url = `${baseUrl}${endpoint}`;
     
-    const options = {
+    const options: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      credentials: 'include' // Include cookies for authentication
+      credentials: 'include' as RequestCredentials // Include cookies for authentication
     };
     
     if (data) {
