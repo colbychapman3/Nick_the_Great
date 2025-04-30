@@ -1,0 +1,36 @@
+name = "nick-the-great-api"
+main = "src/index.js"
+compatibility_date = "2023-05-18"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Uncomment to enable database
+[[d1_databases]]
+binding = "DB"
+database_name = "nick_agent_db"
+database_id = "nick_agent_db"
+
+# KV namespace for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "nick_agent_cache"
+
+# Secrets (to be added via wrangler secret commands)
+# - OPENAI_API_KEY
+# - JWT_SECRET
+# - MONGODB_URI (if using external MongoDB)
+
+[site]
+bucket = "./public"
+
+[triggers]
+crons = ["0 */6 * * *"] # Run every 6 hours
+
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "nick_agent_db_dev"
+database_id = "local"
