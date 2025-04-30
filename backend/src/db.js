@@ -1,4 +1,3 @@
-```javascript
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 
@@ -78,6 +77,12 @@ async function connectToDatabase() {
  * Add listeners to the MongoDB client connection
  */
 function addConnectionListeners() {
+  // Remove existing listeners to prevent duplicates if connectToDatabase is called again
+  client.removeAllListeners("close");
+  client.removeAllListeners("error");
+  client.removeAllListeners("timeout");
+  client.removeAllListeners("serverHeartbeatFailed");
+
   client.on("close", () => {
     console.warn("MongoDB connection closed.");
     db = null; // Mark db as null
@@ -140,4 +145,4 @@ module.exports = {
   closeConnection,
   getClient: () => client, // Expose client if needed elsewhere
 };
-```
+
