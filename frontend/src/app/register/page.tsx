@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { mockApi } from '@/lib/mockApi';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function RegisterPage() {
   const [name, setName] = useState<string>('');
@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,45 +26,8 @@ export default function RegisterPage() {
     }
 
     try {
-      let data;
-      
-      try {
-        // First try the real API
-        const apiUrl = 'https://nick-the-great-api.onrender.com';
-        const response = await fetch(`${apiUrl}/api/auth/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Origin': window.location.origin,
-          },
-          body: JSON.stringify({ name, email, password }),
-          mode: 'cors',
-          credentials: 'include',
-        });
-
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
-          data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data?.message || 'Registration failed');
-          }
-        } else {
-          // If not JSON or other issue, throw error to fall back to mock API
-          throw new Error('API not available');
-        }
-      } catch (error) {
-        console.log('Real API failed, using mock API:', error);
-        // Fall back to mock API
-        data = await mockApi.register({ name, email, password });
-      }
-
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Use the auth context register function
+      await register(name, email, password);
 
       // Show success message
       setError('');
