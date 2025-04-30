@@ -16,6 +16,43 @@ Nick the Great leverages a variety of technologies to enable efficient AI-human 
    - Capabilities: Document creation/editing, memory persistence, tool access
    - Limitations: Requires human to execute external actions
 
+### Web Application Stack
+
+1. **Frontend Framework (Next.js)**
+   - Used for: Creating the web interface for Nick the Great
+   - Key features:
+     - React-based framework with server and client components
+     - App Router for modern routing structure
+     - Authentication context for user management
+     - JWT token-based authentication
+     - Development bypass mode for testing without backend
+   - Deployment: Vercel platform with GitHub integration
+
+2. **Backend API (Express.js/Node.js)**
+   - Used for: Business logic, data processing, authentication
+   - Key features:
+     - RESTful API architecture
+     - JWT authentication system
+     - Strategy endpoints for business operations
+     - Resource allocation endpoints
+     - MongoDB integration for data persistence
+   - Deployment: Render.com platform
+
+3. **Database (MongoDB)**
+   - Used for: Data storage and retrieval
+   - Key collections:
+     - Users (authentication data)
+     - Strategies (business strategies)
+     - Executions (strategy execution records)
+     - Resources (resource allocation)
+     - Configurations (system settings)
+
+4. **Deployment Infrastructure**
+   - Frontend: Vercel (Next.js specialized hosting)
+   - Backend: Render.com (Node.js hosting)
+   - Database: MongoDB Atlas (cloud database)
+   - Requirements: Environment variables, proper configuration
+
 ### Business Platforms
 
 1. **Digital Service Marketplaces**
@@ -70,22 +107,26 @@ Nick the Great leverages a variety of technologies to enable efficient AI-human 
 
 ## Development Setup
 
-The Nick the Great system operates with a minimalist technical footprint:
+The Nick the Great system operates with the following technical setup:
 
-1. **Local Environment**
-   - VS Code for documentation and file management
-   - Web browser for platform access
-   - Minimal local software requirements
+1. **Local Development Environment**
+   - VS Code for code editing and documentation
+   - Node.js and npm/pnpm for package management
+   - Git for version control
+   - Web browser for testing
+   - Terminal for running commands
 
 2. **Cloud Services**
+   - Vercel for frontend hosting
+   - Render.com for backend hosting
+   - MongoDB Atlas for database
+   - GitHub for code repository
    - AI access via Claude interface
-   - Platform accounts (managed by human)
-   - Optional: Cloud storage for assets and backups
 
 3. **Account Management**
    - Human-owned accounts on all platforms
-   - Secure credential storage system
-   - Clear authentication protocols
+   - Environment variables for sensitive configuration
+   - JWT tokens for authentication
 
 ## Technical Constraints
 
@@ -116,32 +157,47 @@ The system operates within several technical constraints:
    - Market data access requires human facilitation
    - Analytics depends on human-provided information
 
+6. **Deployment Limitations**
+   - Vercel has specific requirements for framework detection
+   - Static exports are incompatible with dynamic authentication
+   - API routes require proper configuration
+   - CORS issues between frontend and backend
+
 ## Dependencies
 
 The system has the following key dependencies:
 
-1. **AI Capabilities**
+1. **Framework Dependencies**
+   - Next.js 15.1.4 for frontend
+   - React 19.0.0 for UI components
+   - Express.js for backend API
+   - MongoDB for database
+   - JWT for authentication
+
+2. **Frontend Dependencies**
+   - Tailwind CSS for styling
+   - Radix UI for component library
+   - TypeScript for type safety
+   - Various React hooks and utilities
+
+3. **Backend Dependencies**
+   - Express middleware
+   - MongoDB client
+   - CORS for cross-origin requests
+   - JWT for authentication tokens
+   - dotenv for environment variables
+
+4. **AI Capabilities**
    - Continuous AI availability
    - Content generation capabilities
    - Research and analysis functions
    - Strategic reasoning capabilities
 
-2. **Human Collaboration**
+5. **Human Collaboration**
    - Regular time availability (15-30 minutes daily)
    - Decision-making authority
    - Platform access and authentication
    - Financial transaction handling
-
-3. **Platform Availability**
-   - Digital service marketplace stability
-   - Content platform policies and monetization
-   - Payment processing systems
-   - Account systems and verification methods
-
-4. **Internet Infrastructure**
-   - Reliable internet connectivity
-   - Web browser access
-   - File system access for documentation
 
 ## Tool Usage Patterns
 
@@ -171,10 +227,10 @@ The Nick the Great system employs specific tool usage patterns:
    - Regular status updates and performance reviews
    - Explicit task assignments and responsibilities
 
-5. **Asset Management**
-   - Reusable content and template library
-   - Standardized file naming and organization
-   - Version control for key assets
-   - Cross-platform asset adaptation
+5. **Development Workflow**
+   - Version control through Git
+   - Feature branches for development
+   - Pull requests for code reviews
+   - Continuous deployment through GitHub integration
 
 This technology context document outlines the technical foundation for the Nick the Great project and should inform all implementation decisions related to tools, platforms, and technical approaches.

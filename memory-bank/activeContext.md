@@ -1,117 +1,77 @@
 # Active Context: Nick the Great
 
-## Current Work Focus
+## Current Focus (April 30, 2025)
 
-We are transitioning from initial framework development to Phase 0 implementation, focusing on:
+We are currently working on fixing deployment issues with the Nick the Great platform on Vercel. The project consists of two main components:
 
-1. **Phase 0 Launch Preparation**: Preparing to launch our first set of parallel zero-capital business experiments:
-   - AI-Powered Freelance Writing Services
-   - PixelPaws Chronicles YouTube channel
-   - Digital Templates and Printables
-   - AI-Driven Niche Ebooks
-   - Pinterest Strategy for Passive Income
+1. **Backend API** (NodeJS/Express)
+   - Deployed on Render.com
+   - Currently experiencing connectivity issues
+   - Contains user authentication endpoints and business strategy endpoints
+   - Implemented with MongoDB for data storage
 
-2. **Experiment Infrastructure**: Developing the specific implementation plans and assets needed to launch each selected experiment.
-
-3. **Tracking System Implementation**: Creating the central performance tracking dashboard to monitor all experiments.
+2. **Frontend Application** (Next.js)
+   - Deployed on Vercel
+   - Experiencing 404 issues on routes
+   - Recently implemented authentication bypass system
 
 ## Recent Changes
 
-1. **Completed Framework Development**: We have created the core frameworks needed for Phase 0:
-   - Documented 10 zero-capital business opportunities (`memory-bank/zero_capital_opportunities.md`)
-   - Created standardized experiment template (`experiments/experiment_template.md`)
-   - Established monitoring system design (`memory-bank/monitoring_system_design.md`)
-   - Defined Phase 0 decision framework (`memory-bank/phase0_decision_framework.md`)
+### 1. Authentication System Implementation
 
-2. **Selected Initial Experiments**: We have identified our first four parallel experiments based on:
-   - Timeframe diversity (mix of quick-win and longer-term opportunities)
-   - Business model diversity (services, content, digital products, marketing)
-   - Resource efficiency (high AI leverage, manageable human time requirements)
-   - Alignment with existing skills and interests (leveraging PixelPaws Chronicles, Pinterest)
+We've implemented an authentication system that works both with and without the backend:
 
-3. **Established Measurement Framework**: We have defined standardized metrics for evaluating and comparing experiments:
-   - Primary focus on Return on Time Invested (ROTI)
-   - Clear thresholds for continuation, scaling, adjustment, and termination
-   - Structured review cycles (daily, weekly, monthly)
+- Created an `AuthContext.tsx` that manages user state across the application
+- Implemented login and registration pages with error handling
+- Added development bypass option to test protected routes without backend
+- Added a dashboard page with auth protection
+
+### 2. Deployment Fixes
+
+We've implemented several fixes for the Vercel deployment:
+
+- Added a framework identifier in `.well-known/framework` 
+- Created middleware for proper routing and API forwarding
+- Implemented a catch-all 404 page for better user experience
+- Fixed Next.js configuration for production deployment
+- Added environment variables for API endpoints
+
+### 3. API Connection Handling
+
+- Created an API test page for diagnosing connection issues
+- Implemented error handling for non-JSON responses
+- Set up proper CORS headers for cross-origin requests
+
+## Current Status
+
+- Authentication system is functional with development bypass
+- Frontend structure is complete
+- Backend API connectivity remains an issue (404 errors on endpoints)
+- The application is deployed but experiencing route issues
+
+## Current Decisions
+
+1. **Authentication Approach**: We've decided to implement a flexible authentication system that:
+   - Attempts to use the real backend API first
+   - Falls back to development mode when the API is unavailable
+   - Provides simple login/logout flow with JWT tokens
+
+2. **Deployment Configuration**: We've opted for:
+   - Simplified Next.js configuration
+   - Explicit framework identification for Vercel
+   - Custom middleware for routing
+
+## Key Insights
+
+- Vercel has specific requirements for framework detection
+- Static exports are not compatible with our authentication requirements
+- API proxying through rewrites is the best approach for our architecture
 
 ## Next Steps
 
-1. **Launch First Experiment (AI-Powered Freelance Writing Services)**:
-   - Create detailed experiment document using template
-   - Determine exact service offerings and pricing
-   - Develop service descriptions and example portfolio
-   - Set up accounts on selected platforms (Fiverr/Upwork)
-   - Create delivery workflow and communication templates
-
-2. **Prepare PixelPaws Chronicles Implementation**:
-   - Create detailed experiment document using template
-   - Develop character profiles and storyline concepts
-   - Create production workflow leveraging Capcut
-   - Design cross-promotion strategy for other social platforms
-   - Prepare content calendar for first 2-4 weeks
-
-3. **Prepare AI-Driven Niche Ebooks Implementation**:
-   - Create detailed experiment document using template
-   - Research profitable niche topics with high information demand
-   - Set up accounts on publishing platforms (Amazon KDP, Gumroad)
-   - Develop workflow for ebook content creation and formatting
-   - Create cover design templates using Canva
-
-4. **Set Up Tracking Dashboard**:
-   - Create central spreadsheet with all required tabs
-   - Implement automatic calculation formulas
-   - Test tracking process with sample data
-   - Prepare for first weekly review
-
-## Active Decisions and Considerations
-
-1. **Launch Sequence Decision**:
-   - In what order should we launch the four selected experiments?
-   - How much time should we allow between launches?
-   - Should any experiments be launched simultaneously?
-
-2. **Platform-Specific Implementation Decisions**:
-   - For freelance writing: Which specific platforms and niches offer best opportunities?
-   - For PixelPaws Chronicles: What video length, style, and publishing frequency?
-   - For digital templates: Which specific template types to start with?
-   - For ebooks: Which niche topics have highest demand-to-competition ratio?
-   - For Pinterest: Which boards and niches to focus on initially?
-
-3. **Time Allocation Implementation**:
-   - How to structure daily 15-30 minute sessions for maximum productivity?
-   - Which specific days should be dedicated to which experiments?
-   - How to balance setup tasks vs. ongoing maintenance?
-
-## Important Patterns and Preferences
-
-1. **Documentation Priority**: Maintaining comprehensive documentation of all experiments, results, and learnings remains essential for system improvement.
-
-2. **Template-Based Approach**: Leveraging our standardized templates for experiments, content, and service delivery to maximize efficiency.
-
-3. **Data-Driven Allocation**: Using our established metrics framework to make objective resource allocation decisions.
-
-4. **Rapid Iteration**: Following quick testing, learning, and adjustment cycles with clearly defined review periods.
-
-5. **Progressive Autonomy**: Maintaining clear delineation of AI vs. human responsibilities with expansion based on demonstrated performance.
-
-6. **Launch-Measure-Adjust Cycle**: Implementing the pattern of launching quickly with minimum viable implementation, measuring results, and adjusting based on data.
-
-## Learnings and Project Insights
-
-1. **Framework Development Insights**:
-   - The comprehensive opportunity analysis in `zero_capital_opportunities.md` revealed more viable zero-capital approaches than initially expected
-   - Our standardized experiment template provides a robust structure that should facilitate efficient management of multiple parallel experiments
-   - Our monitoring system design establishes clear, objective criteria for evaluating diverse business models
-
-2. **Open Questions**:
-   - How will our selected Return on Time Invested (ROTI) thresholds perform in practice?
-   - What unexpected challenges might emerge when managing four parallel experiments?
-   - Which lead indicators will prove most predictive of long-term success?
-
-3. **Success Factors**:
-   - Disciplined implementation of our monitoring system
-   - Consistent application of decision thresholds
-   - Effective human-AI collaboration within defined roles
-   - Ability to rapidly shift resources based on early performance signals
-
-This active context document will be regularly updated to reflect the current state, focus, and considerations of the Nick the Great project.
+1. Test the updated configuration on Vercel
+2. Verify routes are working properly
+3. Debug backend connectivity if issues persist
+4. Add more comprehensive error handling
+5. Implement complete dashboard functionality
+6. Connect the frontend to operational backend APIs for business strategies
