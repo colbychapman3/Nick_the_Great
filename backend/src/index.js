@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const { Configuration, OpenAIApi } = require('openai');
+const { connectToDatabase, getClient } = require('./db');
 
 // Load environment variables
 dotenv.config();
@@ -15,26 +15,12 @@ app.use(express.json());
 
 // MongoDB connection
 let db;
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/nick_agent';
-const client = new MongoClient(mongoUri);
 
 // OpenAI configuration
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-
-// Connect to MongoDB
-async function connectToDatabase() {
-  try {
-    await client.connect();
-    db = client.db();
-    console.log('Connected to MongoDB');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  }
-}
 
 // Authentication middleware
 function authenticateToken(req, res, next) {
@@ -528,11 +514,16 @@ app.post('/api/auth/register', async (req, res) => {
 const PORT = process.env.PORT || 3001;
 
 async function startServer() {
-  await connectToDatabase();
-  
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  try {
+    db = await connectToDatabase();
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 }
 
 // For Cloudflare Workers environment

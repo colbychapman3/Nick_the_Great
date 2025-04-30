@@ -1,0 +1,25 @@
+{
+  "name": "nick-the-great-api",
+  "version": "1.0.0",
+  "description": "Backend API for Nick the Great autonomous agent system",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node run.js",
+    "dev": "nodemon run.js",
+    "test": "node src/test-db.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.3.0",
+    "openai": "^3.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
