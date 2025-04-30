@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     domains: ['api.dicebear.com'],
   },
@@ -9,7 +8,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:10000/api/:path*',
+        destination: process.env.NEXT_PUBLIC_API_URL || 'https://nick-the-great-api.onrender.com/api/:path*',
       },
     ];
   },
