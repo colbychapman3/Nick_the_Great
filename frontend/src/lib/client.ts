@@ -11,7 +11,7 @@ export function ApiClient() {
    * @param {object} data - Request data
    * @returns {Promise} - API response
    */
-  const request = async (endpoint, method = 'GET', data = null) => {
+  const request = async (endpoint: string, method: string = 'GET', data: any = null) => {
     const url = `${baseUrl}${endpoint}`;
     
     const options = {
@@ -57,35 +57,35 @@ export function ApiClient() {
   
   // Agent configuration endpoints
   const getAgentConfig = () => request('/agent/config');
-  const updateAgentConfig = (config) => request('/agent/config', 'PUT', config);
+  const updateAgentConfig = (config: any) => request('/agent/config', 'PUT', config);
   
   // Strategy endpoints
   const getStrategies = () => request('/strategies');
-  const getStrategy = (id) => request(`/strategies/${id}`);
-  const createStrategy = (strategy) => request('/strategies', 'POST', strategy);
-  const updateStrategy = (id, strategy) => request(`/strategies/${id}`, 'PUT', strategy);
-  const deleteStrategy = (id) => request(`/strategies/${id}`, 'DELETE');
-  const executeStrategy = (id) => request(`/strategies/${id}/execute`, 'POST');
+  const getStrategy = (id: string) => request(`/strategies/${id}`);
+  const createStrategy = (strategy: any) => request('/strategies', 'POST', strategy);
+  const updateStrategy = (id: string, strategy: any) => request(`/strategies/${id}`, 'PUT', strategy);
+  const deleteStrategy = (id: string) => request(`/strategies/${id}`, 'DELETE');
+  const executeStrategy = (id: string) => request(`/strategies/${id}/execute`, 'POST');
   
   // Resource endpoints
   const getResources = () => request('/resources');
-  const allocateResources = (allocation) => request('/resources/allocate', 'POST', allocation);
+  const allocateResources = (allocation: any) => request('/resources/allocate', 'POST', allocation);
   
   // Approval endpoints
   const getApprovals = () => request('/approvals');
-  const respondToApproval = (id, response) => request(`/approvals/${id}/respond`, 'POST', response);
+  const respondToApproval = (id: string, response: any) => request(`/approvals/${id}/respond`, 'POST', response);
   
   // Platform endpoints
   const getPlatforms = () => request('/platforms');
   
   // Recommendation endpoints
-  const getRecommendedStrategies = (params) => request('/recommendations/strategies', 'POST', params);
+  const getRecommendedStrategies = (params: any) => request('/recommendations/strategies', 'POST', params);
   
   // Simulation endpoints
-  const runSimulation = (params) => request('/simulation/run', 'POST', params);
+  const runSimulation = (params: any) => request('/simulation/run', 'POST', params);
   
   // Debug endpoints
-  const validateConfiguration = (config) => request('/debug/validate', 'POST', config);
+  const validateConfiguration = (config: any) => request('/debug/validate', 'POST', config);
   const getSystemHealth = () => request('/debug/health');
   
   return {
