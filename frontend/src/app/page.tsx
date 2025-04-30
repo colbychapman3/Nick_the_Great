@@ -25,13 +25,18 @@ export default function RegisterPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/auth/register`, {
+      // Use direct API URL to avoid proxy issues during testing
+      const apiUrl = 'https://nick-the-great-api.onrender.com';
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin,
         },
         body: JSON.stringify({ name, email, password }),
+        mode: 'cors',
+        credentials: 'include',
       });
 
       // Check if response is JSON

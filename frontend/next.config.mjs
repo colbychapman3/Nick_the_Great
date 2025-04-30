@@ -4,11 +4,14 @@ const nextConfig = {
   images: {
     domains: ['api.dicebear.com'],
   },
+  env: {
+    NEXT_PUBLIC_API_URL: 'https://nick-the-great-api.onrender.com',
+  },
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL || 'https://nick-the-great-api.onrender.com/api/:path*',
+        destination: 'https://nick-the-great-api.onrender.com/api/:path*',
       },
     ];
   },
