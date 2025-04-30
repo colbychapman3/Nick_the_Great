@@ -10,18 +10,18 @@ if (!uri) {
 }
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-// Add keepAlive options
+// Use standard TCP keep-alive settings within socketOptions
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
-  // Recommended options for long-running applications
-  keepAlive: true,
-  keepAliveInitialDelay: 300000, // 5 minutes
-  connectTimeoutMS: 30000, // 30 seconds
-  socketTimeoutMS: 45000, // 45 seconds
+  // Standard TCP Keepalive options
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  connectTimeoutMS: 30000, // Connection timeout
+  // keepAlive: true, // This option is often implicitly handled or needs specific driver context
+  // keepAliveInitialDelay: 300000, // This specific option is not standard
 });
 
 let db;
@@ -34,6 +34,7 @@ let connectionPromise = null;
  */
 async function connectToDatabase() {
   // If already connected, return the db instance
+  // Check topology status for a more reliable connection check
   if (db && client.topology && client.topology.isConnected()) {
     // console.log("Using existing MongoDB connection.");
     return db;
@@ -86,13 +87,12 @@ function addConnectionListeners() {
   client.on("close", () => {
     console.warn("MongoDB connection closed.");
     db = null; // Mark db as null
-    // Optionally attempt reconnection here or let the next request trigger it
-    // connectToDatabase().catch(err => console.error("Reconnect attempt failed:", err));
+    // The driver attempts reconnection automatically. Logging this event is useful.
   });
   client.on("error", (error) => {
     console.error("MongoDB connection error:", error);
     db = null;
-    // Consider specific error handling or reconnection attempts
+    // Consider specific error handling based on the error type
   });
   client.on("timeout", () => {
     console.warn("MongoDB connection timeout.");
@@ -101,15 +101,13 @@ function addConnectionListeners() {
   client.on("serverHeartbeatFailed", (event) => {
     console.warn("MongoDB server heartbeat failed:", event);
   });
-  // Note: The node driver handles reconnection attempts automatically by default
-  // for certain types of errors. These listeners help log and potentially react
-  // to specific states.
 }
 
 /**
  * Close the MongoDB connection
  */
 async function closeConnection() {
+  // Check topology status before attempting to close
   if (client && client.topology && client.topology.isConnected()) {
     try {
       await client.close();
