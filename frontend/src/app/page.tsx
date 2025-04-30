@@ -34,10 +34,21 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON response (HTML, text, etc.)
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Server returned non-JSON response. API endpoint might be incorrect.');
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data?.message || 'Registration failed');
       }
 
       // Store token in localStorage
