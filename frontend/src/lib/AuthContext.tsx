@@ -18,7 +18,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  devLogin: () => void; // For development bypass
 }
 
 // Create the context with a default value
@@ -36,25 +35,16 @@ export const useAuth = () => {
 // Props for the AuthProvider component
 interface AuthProviderProps {
   children: ReactNode;
-  enableDevMode?: boolean;
 }
-
-// Default test user for development
-const DEV_USER: User = {
-  id: 'dev-user-123',
-  name: 'Development User',
-  email: 'dev@example.com'
-};
 
 // Authentication provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ 
-  children,
-  enableDevMode = process.env.NODE_ENV === 'development' || true // Enable by default in development
+  children
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Check if user is already logged in on component mount
   useEffect(() => {
@@ -77,13 +67,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
     checkAuth();
   }, []);
-
-  // Auto-login for development mode
-  useEffect(() => {
-    if (enableDevMode && !isAuthenticated && !loading) {
-      console.log('🔧 Development mode enabled - Auto login available');
-    }
-  }, [enableDevMode, isAuthenticated, loading]);
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -167,24 +150,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   };
 
-  // Development login (bypass authentication)
-  const devLogin = () => {
-    if (!enableDevMode) {
-      console.warn('Development mode is disabled');
-      return;
-    }
-    
-    const token = `dev-token-${Date.now()}`;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(DEV_USER));
-    
-    setUser(DEV_USER);
-    setIsAuthenticated(true);
-    setError(null);
-    
-    console.log('🔑 Development login successful');
-  };
-
   // Logout function
   const logout = () => {
     localStorage.removeItem('token');
@@ -203,8 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         isAuthenticated,
         login,
         register,
-        logout,
-        devLogin
+        logout
       }}
     >
       {children}

@@ -83,18 +83,7 @@ export default function DashboardPage() {
                   <p className="mt-1 text-sm text-gray-500">
                     This is a placeholder dashboard for development purposes.
                   </p>
-                  <div className="mt-6">
-                    <div className="rounded-md shadow">
-                      <Link href="/api-test" className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        API Test Page
-                      </Link>
-                    </div>
-                    <div className="mt-3">
-                      <Link href="/test" className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-gray-50">
-                        Simple Test Page
-                      </Link>
-                    </div>
-                  </div>
+                  <div className="mt-6"></div>
                 </div>
               </div>
             </div>

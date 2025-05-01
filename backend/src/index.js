@@ -3,8 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs'); // Import bcrypt
-const { Configuration, OpenAIApi } = require('openai');
-const { connectToDatabase, getClient } = require('./db'); // Use the corrected db.js
+const { connectToDatabase } = require('./db'); // Use the corrected db.js
 
 // Load environment variables
 dotenv.config();
@@ -38,12 +37,6 @@ app.use(express.json());
 
 // MongoDB connection variable
 let db;
-
-// OpenAI configuration (if needed, ensure API key is set)
-// const configuration = new Configuration({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
-// const openai = new OpenAIApi(configuration);
 
 // Authentication middleware (remains the same)
 function authenticateToken(req, res, next) {
@@ -221,9 +214,6 @@ app.put('/api/agent/config', authenticateToken, async (req, res) => {
   }
 });
 
-// ... (Keep other existing endpoints like /api/strategies, /api/resources, etc.)
-// Ensure they also check for db connection if they use it.
-
 // Example: Strategy endpoint modification
 app.get('/api/strategies', authenticateToken, async (req, res) => {
   // Ensure db is connected
@@ -237,8 +227,6 @@ app.get('/api/strategies', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching strategies', error: error.message });
   }
 });
-
-// ... (Add similar db checks to other routes using the database)
 
 // --- Start the server ---
 const PORT = process.env.PORT || 10000; // Use 10000 as default for Render
@@ -257,9 +245,6 @@ async function startServer() {
       process.exit(1);
   }
 }
-
-// For Cloudflare Workers environment (Keep if needed, but likely not used for Render deployment)
-// module.exports = app;
 
 // For standalone Node.js environment (This is used by Render)
 if (require.main === module) {

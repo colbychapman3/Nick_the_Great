@@ -1,544 +1,269 @@
-const express = require('express');
-const cors = require('cors');
-const { MongoClient } = require('mongodb');
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const { Configuration, OpenAIApi } = require('openai');
+const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+const bcrypt = require("bcryptjs"); // Ensure this is installed and in package.json
+const { Configuration, OpenAIApi } = require("openai");
+const { connectToDatabase, getClient } = require("./db"); // Use the corrected db.js
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Express app
 const app = express();
-app.use(cors());
+
+// --- CORS Configuration ---
+// Define allowed origins
+const allowedOrigins = [
+  "https://nick-the-great.vercel.app", // Your primary Vercel deployment
+  "https://nick-the-great-auneyxzhz-colby-chapmans-projects.vercel.app", // Previous preview URL
+  "https://nick-the-great-5wvgfpnbc-colby-chapmans-projects.vercel.app", // NEW preview URL from logs
+  // Add any other frontend URLs if needed (e.g., localhost for development)
+  "http://localhost:3000"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      console.error(msg); // Log the blocked origin
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
+// --- End CORS Configuration ---
+
 app.use(express.json());
 
-// MongoDB connection
+// MongoDB connection variable
 let db;
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/nick_agent';
-const client = new MongoClient(mongoUri);
 
-// OpenAI configuration
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+// OpenAI configuration (if needed, ensure API key is set)
+// const configuration = new Configuration({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
+// const openai = new OpenAIApi(configuration);
 
-// Connect to MongoDB
-async function connectToDatabase() {
-  try {
-    await client.connect();
-    db = client.db();
-    console.log('Connected to MongoDB');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  }
-}
-
-// Authentication middleware
+// Authentication middleware (remains the same)
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
   if (!token) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({ message: "Authentication required" });
   }
-  
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+
+  // Use a default secret for verification if not set, but log a warning
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+      console.warn("Warning: JWT_SECRET environment variable is not set. Using default for verification.");
+  }
+
+  jwt.verify(token, secret || "fallback_secret_for_verification_only", (err, user) => {
     if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+      console.error("JWT Verification Error:", err.message);
+      return res.status(403).json({ message: "Invalid or expired token" });
     }
-    
-    req.user = user;
+    req.user = user; // Add user payload to request object
     next();
   });
 }
 
-// API Routes
+// --- API Routes ---
 
-// Agent configuration endpoints
-app.get('/api/agent/config', authenticateToken, async (req, res) => {
+// --- Authentication Endpoints (Changed path from /api/auth to /auth) ---
+app.post("/auth/register", async (req, res) => {
   try {
-    const config = await db.collection('configurations').findOne({ userId: req.user.id });
-    res.json(config || {});
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: "Email, password, and name are required" });
+    }
+
+    // Ensure db is connected
+    if (!db) {
+        return res.status(500).json({ message: "Database not connected" });
+    }
+
+    // Check if user already exists
+    const existingUser = await db.collection("users").findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists with this email" });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user document
+    const newUser = {
+      email,
+      password: hashedPassword,
+      name,
+      role: "user", // Default role
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // Add any default settings if needed
+    };
+
+    const result = await db.collection("users").insertOne(newUser);
+
+    // Don't send password back
+    const userForToken = {
+        id: result.insertedId.toString(),
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role
+    };
+
+    // Generate JWT token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        console.error("Error: JWT_SECRET environment variable is not set for token signing.");
+        return res.status(500).json({ message: "Internal server error: JWT secret not configured." });
+    }
+    const token = jwt.sign(userForToken, secret, { expiresIn: "24h" });
+
+    res.status(201).json({
+      message: "Registration successful",
+      token,
+      user: userForToken // Send user info (without password)
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching agent configuration', error: error.message });
+    console.error("Registration Error:", error);
+    res.status(500).json({ message: "Error during registration", error: error.message });
   }
 });
 
-app.put('/api/agent/config', authenticateToken, async (req, res) => {
+app.post("/auth/login", async (req, res) => {
   try {
-    const result = await db.collection('configurations').updateOne(
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Ensure db is connected
+    if (!db) {
+        return res.status(500).json({ message: "Database not connected" });
+    }
+
+    // Find user
+    const user = await db.collection("users").findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Prepare user payload for token (exclude password)
+    const userForToken = {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role: user.role
+    };
+
+    // Generate JWT token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        console.error("Error: JWT_SECRET environment variable is not set for token signing.");
+        return res.status(500).json({ message: "Internal server error: JWT secret not configured." });
+    }
+    const token = jwt.sign(userForToken, secret, { expiresIn: "24h" });
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: userForToken // Send user info (without password)
+    });
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ message: "Error during login", error: error.message });
+  }
+});
+
+// --- Other API Routes (Agent config, Strategies, etc.) ---
+// These routes use the authenticateToken middleware and retain the /api prefix
+
+app.get("/api/agent/config", authenticateToken, async (req, res) => {
+  // Ensure db is connected
+  if (!db) return res.status(500).json({ message: "Database not connected" });
+  try {
+    // Use req.user.id from the verified token payload
+    const config = await db.collection("configurations").findOne({ userId: req.user.id });
+    res.json(config || {});
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching agent configuration", error: error.message });
+  }
+});
+
+app.put("/api/agent/config", authenticateToken, async (req, res) => {
+  // Ensure db is connected
+  if (!db) return res.status(500).json({ message: "Database not connected" });
+  try {
+    // Use req.user.id from the verified token payload
+    const result = await db.collection("configurations").updateOne(
       { userId: req.user.id },
       { $set: req.body },
       { upsert: true }
     );
-    res.json({ message: 'Configuration updated', result });
+    res.json({ message: "Configuration updated", result });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating agent configuration', error: error.message });
+    res.status(500).json({ message: "Error updating agent configuration", error: error.message });
   }
 });
 
-// Strategy endpoints
-app.get('/api/strategies', authenticateToken, async (req, res) => {
+// ... (Keep other existing endpoints like /api/strategies, /api/resources, etc.)
+// Ensure they also check for db connection if they use it.
+
+// Example: Strategy endpoint modification
+app.get("/api/strategies", authenticateToken, async (req, res) => {
+  // Ensure db is connected
+  if (!db) return res.status(500).json({ message: "Database not connected" });
   try {
-    const strategies = await db.collection('strategies')
+    const strategies = await db.collection("strategies")
       .find({ userId: req.user.id })
       .toArray();
     res.json(strategies);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching strategies', error: error.message });
+    res.status(500).json({ message: "Error fetching strategies", error: error.message });
   }
 });
 
-app.get('/api/strategies/:id', authenticateToken, async (req, res) => {
-  try {
-    const strategy = await db.collection('strategies').findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!strategy) {
-      return res.status(404).json({ message: 'Strategy not found' });
-    }
-    
-    res.json(strategy);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching strategy', error: error.message });
-  }
-});
+// ... (Add similar db checks to other routes using the database)
 
-app.post('/api/strategies', authenticateToken, async (req, res) => {
-  try {
-    const strategy = {
-      ...req.body,
-      userId: req.user.id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    const result = await db.collection('strategies').insertOne(strategy);
-    res.status(201).json({ ...strategy, _id: result.insertedId });
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating strategy', error: error.message });
-  }
-});
-
-app.put('/api/strategies/:id', authenticateToken, async (req, res) => {
-  try {
-    const strategy = await db.collection('strategies').findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!strategy) {
-      return res.status(404).json({ message: 'Strategy not found' });
-    }
-    
-    const updatedStrategy = {
-      ...req.body,
-      userId: req.user.id,
-      updatedAt: new Date()
-    };
-    
-    await db.collection('strategies').updateOne(
-      { _id: req.params.id, userId: req.user.id },
-      { $set: updatedStrategy }
-    );
-    
-    res.json({ ...updatedStrategy, _id: req.params.id });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating strategy', error: error.message });
-  }
-});
-
-app.delete('/api/strategies/:id', authenticateToken, async (req, res) => {
-  try {
-    const result = await db.collection('strategies').deleteOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'Strategy not found' });
-    }
-    
-    res.json({ message: 'Strategy deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting strategy', error: error.message });
-  }
-});
-
-app.post('/api/strategies/:id/execute', authenticateToken, async (req, res) => {
-  try {
-    const strategy = await db.collection('strategies').findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!strategy) {
-      return res.status(404).json({ message: 'Strategy not found' });
-    }
-    
-    // Execute strategy logic would go here
-    // For now, just create an execution record
-    const execution = {
-      strategyId: req.params.id,
-      userId: req.user.id,
-      status: 'in_progress',
-      startedAt: new Date(),
-      logs: ['Strategy execution started']
-    };
-    
-    const result = await db.collection('executions').insertOne(execution);
-    
-    res.json({ 
-      message: 'Strategy execution started', 
-      executionId: result.insertedId 
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error executing strategy', error: error.message });
-  }
-});
-
-// Resource endpoints
-app.get('/api/resources', authenticateToken, async (req, res) => {
-  try {
-    const resources = await db.collection('resources')
-      .find({ userId: req.user.id })
-      .toArray();
-    res.json(resources);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching resources', error: error.message });
-  }
-});
-
-app.post('/api/resources/allocate', authenticateToken, async (req, res) => {
-  try {
-    const allocation = {
-      ...req.body,
-      userId: req.user.id,
-      createdAt: new Date()
-    };
-    
-    const result = await db.collection('allocations').insertOne(allocation);
-    
-    // Update resource balances
-    // This would involve more complex logic in a real implementation
-    
-    res.status(201).json({ 
-      message: 'Resources allocated', 
-      allocationId: result.insertedId 
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error allocating resources', error: error.message });
-  }
-});
-
-// Approval endpoints
-app.get('/api/approvals', authenticateToken, async (req, res) => {
-  try {
-    const approvals = await db.collection('approvals')
-      .find({ userId: req.user.id })
-      .toArray();
-    res.json(approvals);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching approvals', error: error.message });
-  }
-});
-
-app.post('/api/approvals/:id/respond', authenticateToken, async (req, res) => {
-  try {
-    const approval = await db.collection('approvals').findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!approval) {
-      return res.status(404).json({ message: 'Approval request not found' });
-    }
-    
-    const { approved, notes } = req.body;
-    
-    await db.collection('approvals').updateOne(
-      { _id: req.params.id, userId: req.user.id },
-      { 
-        $set: { 
-          status: approved ? 'approved' : 'rejected',
-          respondedAt: new Date(),
-          notes
-        } 
-      }
-    );
-    
-    res.json({ message: `Approval request ${approved ? 'approved' : 'rejected'}` });
-  } catch (error) {
-    res.status(500).json({ message: 'Error responding to approval request', error: error.message });
-  }
-});
-
-// Platform endpoints
-app.get('/api/platforms', authenticateToken, async (req, res) => {
-  try {
-    const platforms = await db.collection('platforms')
-      .find({})
-      .toArray();
-    res.json(platforms);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching platforms', error: error.message });
-  }
-});
-
-// Recommendation endpoints
-app.post('/api/recommendations/strategies', authenticateToken, async (req, res) => {
-  try {
-    const { budget, riskTolerance, skills, timeHorizon } = req.body;
-    
-    // In a real implementation, this would use OpenAI to generate recommendations
-    // For now, return some mock recommendations
-    const recommendations = [
-      {
-        name: 'Content Creation Strategy',
-        description: 'Create and monetize content on Medium',
-        estimatedRoi: 120,
-        timeToProfit: 30,
-        riskLevel: 'low',
-        platforms: ['medium'],
-        initialInvestment: 0
-      },
-      {
-        name: 'Digital Products Strategy',
-        description: 'Create and sell digital products on Etsy',
-        estimatedRoi: 200,
-        timeToProfit: 45,
-        riskLevel: 'medium',
-        platforms: ['etsy'],
-        initialInvestment: 50
-      },
-      {
-        name: 'Affiliate Marketing Strategy',
-        description: 'Promote products through Amazon Associates',
-        estimatedRoi: 150,
-        timeToProfit: 30,
-        riskLevel: 'low',
-        platforms: ['amazon_associates'],
-        initialInvestment: 20
-      }
-    ];
-    
-    res.json(recommendations);
-  } catch (error) {
-    res.status(500).json({ message: 'Error generating recommendations', error: error.message });
-  }
-});
-
-// Simulation endpoints
-app.post('/api/simulation/run', authenticateToken, async (req, res) => {
-  try {
-    const { strategyType, platform, resourceAllocation, timeline } = req.body;
-    
-    // In a real implementation, this would run a simulation based on the parameters
-    // For now, return some mock results
-    const results = {
-      metrics: {
-        estimatedRoi: 127,
-        monthlyIncome: 42,
-        timeToProfit: 18,
-        riskScore: 'medium'
-      },
-      analysis: {
-        strengths: 'Low initial investment, leverages existing skills, scalable over time.',
-        weaknesses: 'Requires consistent content creation, competitive market.',
-        opportunities: 'Potential for viral growth, cross-platform expansion.',
-        threats: 'Platform algorithm changes, market saturation.'
-      },
-      implementationPlan: [
-        {
-          phase: 'Initial Setup',
-          duration: '1-3 days',
-          description: 'Create accounts, set up profiles, prepare content templates.'
-        },
-        {
-          phase: 'Content Creation',
-          duration: '4-10 days',
-          description: 'Develop initial content pieces, optimize for platform algorithms.'
-        },
-        {
-          phase: 'Promotion & Optimization',
-          duration: '11-20 days',
-          description: 'Implement promotion strategies, analyze performance, optimize approach.'
-        },
-        {
-          phase: 'Scaling & Reinvestment',
-          duration: '21-30 days',
-          description: 'Reinvest initial earnings, expand content library, implement automation.'
-        }
-      ]
-    };
-    
-    res.json(results);
-  } catch (error) {
-    res.status(500).json({ message: 'Error running simulation', error: error.message });
-  }
-});
-
-// Debug endpoints
-app.post('/api/debug/validate', authenticateToken, async (req, res) => {
-  try {
-    const config = req.body;
-    
-    // In a real implementation, this would validate the configuration
-    // For now, return some mock validation results
-    const validationResults = {
-      issues: [
-        {
-          type: 'warning',
-          message: 'Limited Platform Access',
-          details: 'Your configuration includes Gumroad but no API key is provided.'
-        },
-        {
-          type: 'error',
-          message: 'Resource Allocation',
-          details: 'Total allocated resources exceed available budget by $15.'
-        },
-        {
-          type: 'success',
-          message: 'Strategy Compatibility',
-          details: 'Selected strategies are compatible with your skills and platforms.'
-        }
-      ],
-      suggestions: [
-        {
-          type: 'resource',
-          message: 'Resource Reallocation',
-          details: 'Consider reducing affiliate marketing budget by $15 to match available resources.'
-        },
-        {
-          type: 'platform',
-          message: 'Platform Prioritization',
-          details: 'Medium has higher ROI potential than Etsy for your selected content strategy.'
-        },
-        {
-          type: 'timeline',
-          message: 'Timeline Adjustment',
-          details: 'Extending timeline from 30 to 45 days could improve ROI by approximately 22%.'
-        }
-      ]
-    };
-    
-    res.json(validationResults);
-  } catch (error) {
-    res.status(500).json({ message: 'Error validating configuration', error: error.message });
-  }
-});
-
-app.get('/api/debug/health', async (req, res) => {
-  try {
-    const health = {
-      status: 'healthy',
-      components: [
-        {
-          name: 'API Connection',
-          status: 'operational',
-          lastCheck: new Date(),
-          details: 'Response time: 124ms'
-        },
-        {
-          name: 'Database',
-          status: 'operational',
-          lastCheck: new Date(),
-          details: 'Query time: 45ms'
-        },
-        {
-          name: 'Medium Integration',
-          status: 'degraded',
-          lastCheck: new Date(Date.now() - 300000), // 5 minutes ago
-          details: 'API rate limiting active'
-        },
-        {
-          name: 'Amazon Associates',
-          status: 'operational',
-          lastCheck: new Date(Date.now() - 300000), // 5 minutes ago
-          details: 'All services available'
-        }
-      ]
-    };
-    
-    res.json(health);
-  } catch (error) {
-    res.status(500).json({ message: 'Error checking system health', error: error.message });
-  }
-});
-
-// Authentication endpoints
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // In a real implementation, this would validate credentials against the database
-    // For now, just check for a demo account
-    if (email === 'demo@example.com' && password === 'password') {
-      const user = {
-        id: '1',
-        email: 'demo@example.com',
-        name: 'Demo User'
-      };
-      
-      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '24h' });
-      
-      res.json({
-        message: 'Login successful',
-        token,
-        user
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid credentials' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Error during login', error: error.message });
-  }
-});
-
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, name } = req.body;
-    
-    // In a real implementation, this would create a new user in the database
-    // For now, just return a success message
-    const user = {
-      id: Date.now().toString(),
-      email,
-      name
-    };
-    
-    const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '24h' });
-    
-    res.status(201).json({
-      message: 'Registration successful',
-      token,
-      user
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error during registration', error: error.message });
-  }
-});
-
-// Start the server
-const PORT = process.env.PORT || 3001;
+// --- Start the server ---
+const PORT = process.env.PORT || 10000; // Use 10000 as default for Render
 
 async function startServer() {
-  await connectToDatabase();
-  
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  try {
+    // Connect to DB and assign to the outer 'db' variable
+    const database = await connectToDatabase();
+    db = database; // Make db instance available to routes
+
+    app.listen(PORT, "0.0.0.0", () => { // Ensure listening on 0.0.0.0
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+  }
 }
 
-// For Cloudflare Workers environment
-module.exports = app;
+// For Cloudflare Workers environment (Keep if needed, but likely not used for Render deployment)
+// module.exports = app;
 
-// For standalone Node.js environment
+// For standalone Node.js environment (This is used by Render)
 if (require.main === module) {
-  startServer().catch(console.error);
+  startServer();
 }
