@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
   
-  const { login, error, isAuthenticated, devLogin, loading } = useAuth();
+  const { login, error, isAuthenticated, loading } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -31,11 +31,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDevLogin = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    devLogin();
   };
 
   if (loading) {
