@@ -18,6 +18,8 @@ const allowedOrigins = [
   "https://nick-the-great.vercel.app", // Your primary Vercel deployment
   "https://nick-the-great-auneyxzhz-colby-chapmans-projects.vercel.app", // Previous preview URL
   "https://nick-the-great-5wvgfpnbc-colby-chapmans-projects.vercel.app", // NEW preview URL from logs
+  "https://nick-the-great-ih73wdbfc-colby-chapmans-projects.vercel.app", // Current Vercel preview
+  "https://nick-the-great-git-main-colby-chapmans-projects.vercel.app", // Main branch Vercel preview
   // Add any other frontend URLs if needed (e.g., localhost for development)
   "http://localhost:3000"
 ];
