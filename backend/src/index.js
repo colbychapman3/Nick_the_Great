@@ -24,8 +24,9 @@ const app = express();
 const allowedOrigins = [
   "https://nick-the-great.vercel.app", // Primary Vercel deployment
   "https://nick-the-great-git-main-colby-chapmans-projects.vercel.app", // Current Vercel preview URL
+  "https://nick-the-great-bp27fss5b-colby-chapmans-projects.vercel.app", // Latest preview URL
   "https://nick-the-great-auneyxzhz-colby-chapmans-projects.vercel.app", // Previous preview URL
-  "https://nick-the-great-5wvgfpnbc-colby-chapmans-projects.vercel.app", // Latest preview URL
+  "https://nick-the-great-5wvgfpnbc-colby-chapmans-projects.vercel.app", // Other preview URL
   "http://localhost:3000" // For local development
 ];
 

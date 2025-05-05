@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nick-the-great-api
+    name: nick-the-great
     runtime: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && node src/index.js
