@@ -13,7 +13,8 @@ dotenv.config();
 const app = express();
 
 // --- CORS Configuration ---
-app.use(cors({
+// Define CORS options
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -48,7 +49,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow common HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // Allow necessary headers for requests (Content-Type for JSON, Authorization for JWT, X-Requested-With is common)
   optionsSuccessStatus: 200 // Set success status for OPTIONS preflight requests (for compatibility)
-}));
+};
+
+// Handle OPTIONS requests (preflight) explicitly for all routes
+// This should come BEFORE other routes or general CORS middleware for other methods
+app.options('*', cors(corsOptions)); 
+
+// Apply CORS middleware for all other requests (GET, POST, etc.)
+app.use(cors(corsOptions));
 // --- End CORS Configuration ---
 
 app.use(express.json());
