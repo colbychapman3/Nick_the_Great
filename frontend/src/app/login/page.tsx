@@ -7,8 +7,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   
-  const { login, error, isAuthenticated, isLoading } = useAuth();
+  const { login, error: authError, isAuthenticated, isLoading } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -17,14 +18,30 @@ export default function LoginPage() {
     }
   }, [isAuthenticated]);
 
+  // Clear local error when auth error changes
+  useEffect(() => {
+    if (authError) {
+      setLocalError(null);
+    }
+  }, [authError]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setLocalError(null);
+    
+    // Basic form validation
+    if (!email || !password) {
+      setLocalError('Please enter both email and password');
+      setIsSubmitting(false);
+      return;
+    }
     
     try {
       await login(email, password);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      // Any additional local error handling can be done here
     } finally {
       setIsSubmitting(false);
     }
@@ -38,8 +55,8 @@ export default function LoginPage() {
     );
   }
 
-  // Debug display of API URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  // Get API URL for debugging
+  const apiUrl = process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://nick-the-great.onrender.com/auth';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -52,11 +69,12 @@ export default function LoginPage() {
             Access your Nick the Great dashboard
           </p>
           
-          {/* Debug information */}
-          <div className="mt-2 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
-            <p><strong>API URL:</strong> {apiUrl}</p>
-            <p><strong>Full Login URL:</strong> {`${apiUrl}/auth/login`}</p>
-          </div>
+          {/* Debug information (only visible in development) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
+              <p><strong>Auth API URL:</strong> {apiUrl}</p>
+            </div>
+          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -95,9 +113,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {error && (
+          {/* Display either auth context error or local validation error */}
+          {(authError || localError) && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
+              <span className="block sm:inline">{authError || localError}</span>
             </div>
           )}
 
@@ -105,9 +124,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? (
+                <>
+                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </span>
+                  Signing in...
+                </>
+              ) : 'Sign in'}
             </button>
           </div>
           
