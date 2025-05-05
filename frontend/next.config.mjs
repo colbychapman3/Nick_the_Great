@@ -7,17 +7,14 @@ const nextConfig = {
     domains: ['api.dicebear.com'],
   },
   
-  // Environment variables
-  env: {
-    NEXT_PUBLIC_API_URL: 'https://nick-the-great-api.onrender.com',
-  },
+  // Environment variables are managed in Vercel/deployment platform
   
   // API routes proxying
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://nick-the-great-api.onrender.com/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://nick-the-great.onrender.com'}/api/:path*`,
       },
     ];
   },
