@@ -3,6 +3,7 @@ import * as React from "react";
 export function ApiClient() {
   // Base API URL - will be replaced with environment variable in production
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  console.log('Using API base URL:', baseUrl); // Add this log statement
   
   /**
    * Make a request to the API
@@ -13,6 +14,7 @@ export function ApiClient() {
    */
   const request = async (endpoint: string, method: string = 'GET', data: any = null) => {
     const url = `${baseUrl}${endpoint}`;
+    console.log('Making request to:', url); // Add this log statement
     
     const options: RequestInit = {
       method,
