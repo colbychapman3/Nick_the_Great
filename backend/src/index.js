@@ -48,6 +48,22 @@ app.use(cors({
 
 app.use(express.json());
 
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: 'OK',
+    timestamp: Date.now()
+  };
+  
+  try {
+    res.status(200).json(healthCheck);
+  } catch (error) {
+    healthCheck.message = error;
+    res.status(503).json(healthCheck);
+  }
+});
+
 // MongoDB connection variable
 let db;
 
