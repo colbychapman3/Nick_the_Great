@@ -203,16 +203,12 @@ app.put("/api/agent/config", authenticateToken, ensureDbConnected, async (req, r
   }
 });
 
-app.get("/api/strategies", authenticateToken, ensureDbConnected, async (req, res) => {
-  try {
-    const strategies = await db.collection("strategies")
-      .find({ userId: req.user.id })
-      .toArray();
-    res.json(strategies);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching strategies", error: error.message });
-  }
-});
+// Apply authentication and database middleware to API routes
+const strategiesRouter = require('./routes/strategies');
+app.use('/api/strategies', authenticateToken, ensureDbConnected, strategiesRouter);
+
+const resourcesRouter = require('./routes/resources');
+app.use('/api/resources', authenticateToken, ensureDbConnected, resourcesRouter);
 
 // ... (Apply authenticateToken and ensureDbConnected to other /api routes as needed)
 
