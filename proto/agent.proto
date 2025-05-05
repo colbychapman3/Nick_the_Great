@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+service AgentService {
+  rpc ExecuteCommand (CommandRequest) returns (CommandResponse);
+  rpc StreamState (StateRequest) returns (stream StateUpdate);
+}
+
+message CommandRequest {
+  string command_text = 1;
+  string source = 2; // "cli", "mobile", or "web"
+}
+
+message CommandResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message StateUpdate {
+  repeated string current_tasks = 1;
+  string status_message = 2;
+}

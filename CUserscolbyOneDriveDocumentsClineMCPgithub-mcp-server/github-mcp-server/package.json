@@ -1,0 +1,26 @@
+{
+  "name": "github.com/modelcontextprotocol/servers/tree/main/src/github",
+  "version": "0.1.0",
+  "description": "The GitHub MCP server is described in the provided README as an &#34;MCP Server for the GitHub API, enabling file operations, repository management, search functionality, and more.&#34; It includes features like automatic branch creation, comprehensive error handling, Git history preservation, batch operations, and advanced search capabilities.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "github.com/modelcontextprotocol/servers/tree/main/src/github": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  }
+}

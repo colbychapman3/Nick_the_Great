@@ -1,0 +1,22 @@
+Root Directory:
+README.md (Provides context for the repository)
+.env.example (Shows required environment variables for setup)
+.gitignore (Crucial - excludes node_modules, .env, build outputs, etc.)
+backend Directory:
+backend/package.json (Dependencies and start script for Render)
+backend/src/auth.js
+backend/src/index.js
+backend/.gitignore (Excludes node_modules, .env)
+backend/render.yaml (Correction: Render uses render.yaml, not render.json for blueprint config)
+frontend Directory:
+frontend/package.json (Dependencies and build/start scripts for Vercel)
+frontend/next.config.mjs
+frontend/postcss.config.mjs
+frontend/tailwind.config.ts
+frontend/tsconfig.json
+frontend/src/app/... (All files within app)
+frontend/src/components/... (All files within components)
+frontend/src/lib/... (All files within lib)
+frontend/public/... (Any static assets)
+frontend/.gitignore (Excludes node_modules, .next, .env.local)
+frontend/vercel.json (Optional, but good for specific Vercel settings)
