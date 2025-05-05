@@ -129,11 +129,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const data = await response.json();
       
+      // Check if response contains the expected fields
+      if (!data.token) {
+        throw new Error('Authentication response missing token');
+      }
+      
       // Save token to localStorage
       localStorage.setItem('token', data.token);
       
       // Set user data and auth state
-      setUser(data.user);
+      // If user object is not provided, try to extract from token
+      if (data.user) {
+        setUser(data.user);
+      } else {
+        try {
+          // Decode token to get user data
+          const base64Url = data.token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(window.atob(base64));
+          
+          setUser({
+            id: payload.id || payload.sub,
+            email: payload.email,
+            name: payload.name,
+            role: payload.role
+          });
+        } catch (e) {
+          console.error('Failed to extract user data from token:', e);
+          throw new Error('Invalid token format or missing user data');
+        }
+      }
+      
       setIsAuthenticated(true);
     } catch (err: any) {
       console.error('Error during login', err);
@@ -173,11 +199,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const data = await response.json();
       
+      // Check if response contains the expected fields
+      if (!data.token) {
+        throw new Error('Authentication response missing token');
+      }
+      
       // Save token to localStorage
       localStorage.setItem('token', data.token);
       
       // Set user data and auth state
-      setUser(data.user);
+      // If user object is not provided, try to extract from token
+      if (data.user) {
+        setUser(data.user);
+      } else {
+        try {
+          // Decode token to get user data
+          const base64Url = data.token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(window.atob(base64));
+          
+          setUser({
+            id: payload.id || payload.sub,
+            email: payload.email,
+            name: payload.name,
+            role: payload.role
+          });
+        } catch (e) {
+          console.error('Failed to extract user data from token:', e);
+          throw new Error('Invalid token format or missing user data');
+        }
+      }
+      
       setIsAuthenticated(true);
     } catch (err: any) {
       console.error('Error during registration', err);
