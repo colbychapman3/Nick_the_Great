@@ -41,6 +41,9 @@ export default function LoginPage() {
     );
   }
 
+  // Debug display of API URL
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -51,6 +54,12 @@ export default function LoginPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Access your Nick the Great dashboard
           </p>
+          
+          {/* Debug information */}
+          <div className="mt-2 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
+            <p><strong>API URL:</strong> {apiUrl}</p>
+            <p><strong>Full Login URL:</strong> {`${apiUrl}/auth/login`}</p>
+          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

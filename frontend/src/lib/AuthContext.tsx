@@ -76,9 +76,12 @@ const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
       
       // In a real app, this would call your API
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      console.log('Auth API URL:', apiUrl);
+      const fullUrl = `${apiUrl}/auth/login`;
+      console.log('Full Auth URL:', fullUrl);
       
       try {
-        const response = await fetch(`${apiUrl}/auth/login`, {
+        const response = await fetch(fullUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -117,9 +120,12 @@ const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
       
       // In a real app, this would call your API
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      console.log('Auth API URL (register):', apiUrl);
+      const fullUrl = `${apiUrl}/auth/register`;
+      console.log('Full Auth URL (register):', fullUrl);
       
       try {
-        const response = await fetch(`${apiUrl}/auth/register`, {
+        const response = await fetch(fullUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
