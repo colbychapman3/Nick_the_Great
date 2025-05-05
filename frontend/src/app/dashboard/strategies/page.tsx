@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link'; // Import Link
 import { useAuth } from '@/lib/AuthContext';
 
 export default function StrategiesPage() {
@@ -110,9 +111,10 @@ export default function StrategiesPage() {
                 }`}>
                   {strategy.status || 'Draft'}
                 </span>
-                <button className="text-blue-600 hover:text-blue-800">
+                {/* Wrap button in Link */}
+                <Link href={`/dashboard/strategies/${strategy._id}`} className="text-blue-600 hover:text-blue-800">
                   View Details
-                </button>
+                </Link>
               </div>
             </div>
           ))}
@@ -153,9 +155,10 @@ export default function StrategiesPage() {
                   }`}>
                     {strategy.status}
                   </span>
-                  <button className="text-blue-600 hover:text-blue-800">
+                  {/* Add Link to placeholder button as well, using index as a dummy ID */}
+                  <Link href={`/dashboard/strategies/demo-${index}`} className="text-blue-600 hover:text-blue-800">
                     View Details
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
