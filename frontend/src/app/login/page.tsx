@@ -1,39 +1,36 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
-  const { login, error, isAuthenticated, loading } = useAuth();
+  const { login, error, isAuthenticated, isLoading } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     try {
       await login(email, password);
     } catch (error) {
       console.error('Login error:', error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -107,10 +104,10 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
           
@@ -119,14 +116,14 @@ export default function LoginPage() {
           
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
                 Back to home
-              </Link>
+              </a>
             </div>
             <div className="text-sm">
-              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
                 Don't have an account? Sign up
-              </Link>
+              </a>
             </div>
           </div>
         </form>

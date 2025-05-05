@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function RegisterPage() {
@@ -9,19 +8,19 @@ export default function RegisterPage() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { register } = useAuth();
+  const [formError, setFormError] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { register, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    setIsSubmitting(true);
+    setFormError('');
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
+      setFormError('Passwords do not match');
+      setIsSubmitting(false);
       return;
     }
 
@@ -30,14 +29,14 @@ export default function RegisterPage() {
       await register(name, email, password);
 
       // Show success message
-      setError('');
+      setFormError('');
       alert('Registration successful! You can now log in.');
-      window.location.href = '/';
+      window.location.href = '/login';
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-      setError(errorMessage);
+      setFormError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -49,7 +48,7 @@ export default function RegisterPage() {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Start your passive income journey with Nick_the_Great
+            Start your passive income journey with Nick the Great
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -121,30 +120,32 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
+          {(formError || error) && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">{formError || error}</span>
+            </div>
           )}
 
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
                 Back to home
-              </Link>
+              </a>
             </div>
             <div className="text-sm">
-              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
                 Already have an account? Sign in
-              </Link>
+              </a>
             </div>
           </div>
         </form>
