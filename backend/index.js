@@ -276,7 +276,8 @@ app.get("/api/strategies", authenticateToken, async (req, res) => {
 // ... (Add similar db checks to other routes using the database)
 
 // --- Start the server ---
-const PORT = process.env.PORT || 10000; // Use 10000 as default for Render
+// Check if we're running locally (not on Render)
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'development' ? 1000 : 10000);
 
 async function startServer() {
   try {
