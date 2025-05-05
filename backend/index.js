@@ -23,43 +23,17 @@ app.use((req, res, next) => {
 // --- End Logging Middleware ---
 
 // --- CORS Configuration ---
-// Define CORS options
+// Simplify CORS for development/testing
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow localhost for development
-    if (origin === "http://localhost:3000") {
-      return callback(null, true);
-    }
-    
-    // Allow the main production deployment
-    if (origin === "https://nick-the-great.vercel.app") {
-      return callback(null, true);
-    }
-    
-    // Allow all Vercel preview deployments with pattern matching
-    // Regex Explanation:
-    // ^https:\/\/nick-the-great- : Starts with 'https://nick-the-great-'
-    // .*                         : Matches any characters (the unique preview ID)
-    // -colby-chapmans-projects\.vercel\.app$ : Ends with the rest of the Vercel domain
-    if (/^https:\/\/nick-the-great-.*-colby-chapmans-projects\.vercel\.app$/.test(origin)) {
-      console.log(`Allowing Vercel preview URL via pattern: ${origin}`);
-      return callback(null, true);
-    }
-    
-    // Block all other origins
-    const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-    console.error(msg); // Log the blocked origin
-    return callback(new Error(msg), false);
-  },
-  // --- Additional CORS Options ---
-  credentials: true, // Allow cookies and authorization headers to be sent
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow common HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // Allow necessary headers for requests (Content-Type for JSON, Authorization for JWT, X-Requested-With is common)
-  optionsSuccessStatus: 200 // Set success status for OPTIONS preflight requests (for compatibility)
+  origin: '*', // Allow all origins
+  credentials: true, // Still allow credentials (cookies, auth headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // Allow necessary headers
+  optionsSuccessStatus: 200 // Compatibility for preflight requests
 };
+
+app.use(cors(corsOptions));
+// --- End CORS Configuration ---
 
 // Handle OPTIONS requests (preflight) explicitly for all routes
 // This should come BEFORE other routes or general CORS middleware for other methods
