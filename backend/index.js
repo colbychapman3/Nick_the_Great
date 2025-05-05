@@ -13,28 +13,41 @@ dotenv.config();
 const app = express();
 
 // --- CORS Configuration ---
-// Define allowed origins
-const allowedOrigins = [
-  "https://nick-the-great.vercel.app", // Your primary Vercel deployment
-  "https://nick-the-great-auneyxzhz-colby-chapmans-projects.vercel.app", // Previous preview URL
-  "https://nick-the-great-5wvgfpnbc-colby-chapmans-projects.vercel.app", // NEW preview URL from logs
-  "https://nick-the-great-ih73wdbfc-colby-chapmans-projects.vercel.app", // Current Vercel preview
-  "https://nick-the-great-git-main-colby-chapmans-projects.vercel.app", // Main branch Vercel preview
-  // Add any other frontend URLs if needed (e.g., localhost for development)
-  "http://localhost:3000"
-];
-
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      console.error(msg); // Log the blocked origin
-      return callback(new Error(msg), false);
+    
+    // Allow localhost for development
+    if (origin === "http://localhost:3000") {
+      return callback(null, true);
     }
-    return callback(null, true);
-  }
+    
+    // Allow the main production deployment
+    if (origin === "https://nick-the-great.vercel.app") {
+      return callback(null, true);
+    }
+    
+    // Allow all Vercel preview deployments with pattern matching
+    // Regex Explanation:
+    // ^https:\/\/nick-the-great- : Starts with 'https://nick-the-great-'
+    // .*                         : Matches any characters (the unique preview ID)
+    // -colby-chapmans-projects\.vercel\.app$ : Ends with the rest of the Vercel domain
+    if (/^https:\/\/nick-the-great-.*-colby-chapmans-projects\.vercel\.app$/.test(origin)) {
+      console.log(`Allowing Vercel preview URL via pattern: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Block all other origins
+    const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+    console.error(msg); // Log the blocked origin
+    return callback(new Error(msg), false);
+  },
+  // --- Additional CORS Options ---
+  credentials: true, // Allow cookies and authorization headers to be sent
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow common HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'], // Allow necessary headers for requests (Content-Type for JSON, Authorization for JWT, X-Requested-With is common)
+  optionsSuccessStatus: 200 // Set success status for OPTIONS preflight requests (for compatibility)
 }));
 // --- End CORS Configuration ---
 
