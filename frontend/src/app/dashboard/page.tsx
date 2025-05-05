@@ -81,7 +81,9 @@ export default function DashboardPage() {
                   <p className="mt-1 text-sm text-gray-500">
                     This is a placeholder dashboard for development purposes.
                   </p>
-                  <div className="mt-6"></div>
+                  <div className="mt-6">
+                    {/* Added comment to force a change for git */}
+                  </div>
                 </div>
               </div>
             </div>
