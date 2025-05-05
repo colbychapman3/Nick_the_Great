@@ -2,89 +2,79 @@
 
 ## Current Focus (May 5, 2025)
 
-We are currently working on fixing deployment issues with the Nick the Great platform on Vercel. The project consists of two main components:
+We are currently implementing core features for the Nick the Great platform after successfully fixing the deployment issues between Vercel (frontend) and Render (backend).
 
 1. **Backend API** (NodeJS/Express)
-   - Deployed on Render.com
-   - Currently experiencing connectivity issues
+   - Successfully deployed on Render.com
+   - Connected with frontend via proper CORS configuration
    - Contains user authentication endpoints and business strategy endpoints
    - Implemented with MongoDB for data storage
+   - Recently added proper routes for Strategies and Resources
 
 2. **Frontend Application** (Next.js)
    - Deployed on Vercel
-   - Experiencing 404 issues on routes
-   - Recently implemented authentication bypass system
+   - Successfully connecting to backend
+   - Authentication system fully functional
+   - Recently implemented Strategies and Resources pages
 
 ## Recent Changes
 
-### 1. Authentication and Deployment Fixes (Previous)
-- Implemented authentication system with development bypass
-- Fixed Vercel deployment issues
-- Created API test page for diagnosing connection issues
+### 1. Deployment & Connectivity Fixes (Completed)
+- Updated service name in render.yaml from "nick-the-great-api" to "nick-the-great"
+- Implemented dynamic CORS configuration on backend that handles any Vercel preview URL via regex pattern
+- Fixed environment variables to use consistent service naming conventions
+- Successfully deployed and tested connection between frontend and backend
 
-### 2. New Developments
-- Created a mobile app directory with React Native setup
-- Configured environment variables for mobile app
-- Added gRPC server configuration variables to root .env file
-- Updated .env.example to include gRPC variables
+### 2. Feature Implementation
+- Created Strategies page with UI and API integration
+- Created Resources page with UI and API integration
+- Implemented proper authentication context with JWT handling
+- Added placeholder content for development when no data exists
 
-### 1. Authentication System Implementation
+### 3. Backend API Development
+- Created dedicated routes for Strategies with proper CRUD operations
+- Created dedicated routes for Resources with proper CRUD operations
+- Implemented proper error handling and validation
+- Updated index.js to use these routes with authentication middleware
 
-We've implemented an authentication system that works both with and without the backend:
-
-- Created an `AuthContext.tsx` that manages user state across the application
-- Implemented login and registration pages with error handling
-- Added development bypass option to test protected routes without backend
-- Added a dashboard page with auth protection
-
-### 2. Deployment Fixes
-
-We've implemented several fixes for the Vercel deployment:
-
-- Added a framework identifier in `.well-known/framework` 
-- Created middleware for proper routing and API forwarding
-- Implemented a catch-all 404 page for better user experience
-- Fixed Next.js configuration for production deployment
-- Added environment variables for API endpoints
-
-### 3. API Connection Handling
-
-- Created an API test page for diagnosing connection issues
-- Implemented error handling for non-JSON responses
-- Set up proper CORS headers for cross-origin requests
+### 4. Authentication System 
+- Improved the AuthContext provider with proper token handling
+- Implemented JWT decoding and validation
+- Added consistent authentication UI across feature pages
+- Built redirects for unauthenticated users
 
 ## Current Status
-- Mobile app structure created with React Native
-- Authentication screen implemented for mobile
-- gRPC configuration added to environment variables
-- Authentication system is functional with development bypass
-- Frontend structure is complete
-- The application is deployed and routing issues have been resolved
-- Backend API connectivity remains an issue
+- Deployment pipeline is fully functional with automatic updates
+- Authentication system is properly implemented and working across environments
+- Feature pages (Strategies, Resources) are implemented with proper UI
+- Backend API routes are established for core features
+- Mobile app structure exists but needs further development
 
 ## Current Decisions
 
-1. **Authentication Approach**: We've decided to implement a flexible authentication system that:
-   - Attempts to use the real backend API first
-   - Falls back to development mode when the API is unavailable
-   - Provides simple login/logout flow with JWT tokens
+1. **Feature Architecture**: We've implemented a consistent pattern for features:
+   - Clean separation between frontend UI and backend API
+   - Use of React hooks for data fetching and state management
+   - Consistent UI patterns for loading, error states, and empty states
+   - Development placeholders for testing UI without data
 
-2. **Deployment Configuration**: We've opted for:
-   - Simplified Next.js configuration
-   - Explicit framework identification for Vercel
-   - Custom middleware for routing
+2. **Backend Organization**: We've restructured the backend to:
+   - Use dedicated route files for better organization
+   - Implement proper middleware patterns for authentication and database connectivity
+   - Follow RESTful API principles for CRUD operations
+   - Include comprehensive error handling
 
 ## Key Insights
 
-- Vercel has specific requirements for framework detection
-- Static exports are not compatible with our authentication requirements
-- API proxying through rewrites is the best approach for our architecture
+- Dynamic CORS configuration with regex patterns is more maintainable than manually updating allowed origins
+- Consistent patterns between features simplifies development and maintenance
+- Placeholder content during development improves the testing experience
 
 ## Next Steps
-1. Implement gRPC functionality in the backend
-2. Connect mobile app to gRPC server
-3. Test gRPC connectivity across platforms
-4. Continue debugging backend API connectivity
-5. Implement complete dashboard functionality
-6. Add more comprehensive error handling
-7. Connect the frontend to operational backend APIs for business strategies
+1. Implement more comprehensive dashboard functionality
+2. Add form handling for creating and editing strategies and resources
+3. Implement gRPC functionality in the backend
+4. Connect mobile app to existing REST APIs
+5. Add more comprehensive error handling and validation
+6. Implement user profile management
+7. Add analytics and reporting features
