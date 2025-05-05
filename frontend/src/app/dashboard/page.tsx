@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+const { user, isAuthenticated, isLoading, logout } = useAuth(); // This is correct, using isLoading
 
   // For client components in Next.js 13+, we handle redirects differently
   useEffect(() => {
