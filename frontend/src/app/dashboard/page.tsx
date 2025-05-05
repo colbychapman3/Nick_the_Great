@@ -1,22 +1,20 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, loading, logout } = useAuth();
-  const router = useRouter();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-  // Redirect if not authenticated
+  // For client components in Next.js 13+, we handle redirects differently
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
+    if (!isLoading && !isAuthenticated) {
+      // In a client component, we can use window.location
+      window.location.href = '/login';
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, isLoading]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -25,7 +23,7 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect to login from the useEffect
+    return null; // Will redirect from the useEffect
   }
 
   return (
@@ -38,15 +36,15 @@ export default function DashboardPage() {
                 <span className="text-xl font-bold text-gray-900">Nick the Great</span>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link href="/dashboard" className="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <a href="/dashboard" className="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Dashboard
-                </Link>
-                <Link href="/dashboard/strategies" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                </a>
+                <a href="/dashboard/strategies" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Strategies
-                </Link>
-                <Link href="/dashboard/resources" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                </a>
+                <a href="/dashboard/resources" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Resources
-                </Link>
+                </a>
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
