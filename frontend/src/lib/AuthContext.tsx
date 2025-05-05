@@ -109,7 +109,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const apiUrl = process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://nick-the-great.onrender.com/auth';
       console.log('Auth API URL:', apiUrl);
       
-      const response = await fetch(`${apiUrl}/login`, {
+      // Don't append /login if the URL already includes /auth
+      const loginUrl = apiUrl.endsWith('/auth') ? `${apiUrl}/login` : apiUrl;
+      console.log('Full Auth URL:', loginUrl);
+      
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -117,7 +121,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         body: JSON.stringify({ email, password })
       });
       
-      console.log('Full Auth URL:', `${apiUrl}/login`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -149,8 +152,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setError(null);
       
       const apiUrl = process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://nick-the-great.onrender.com/auth';
+      console.log('Auth API URL for registration:', apiUrl);
       
-      const response = await fetch(`${apiUrl}/register`, {
+      // Don't append /register if the URL already includes /auth
+      const registerUrl = apiUrl.endsWith('/auth') ? `${apiUrl}/register` : apiUrl;
+      console.log('Full Registration URL:', registerUrl);
+      
+      const response = await fetch(registerUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
