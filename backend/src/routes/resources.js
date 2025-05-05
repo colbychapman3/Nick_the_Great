@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
-const { getClient } = require('../db');
+const { connectToDatabase } = require('../db');
 
 // Get all resources for a user
 router.get('/', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
 
     // Find all resources for the user
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 // Get a specific resource by ID
 router.get('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const resourceId = req.params.id;
 
@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
 // Create a new resource
 router.post('/', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     
     // Validate request body
@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
 // Update a resource
 router.put('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const resourceId = req.params.id;
 
@@ -142,7 +142,7 @@ router.put('/:id', async (req, res) => {
 // Delete a resource
 router.delete('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const resourceId = req.params.id;
 

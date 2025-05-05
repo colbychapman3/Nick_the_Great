@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
-const { getClient } = require('../db');
+const { connectToDatabase } = require('../db');
 
 // Get all strategies for a user
 router.get('/', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
 
     // Find all strategies for the user
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 // Get a specific strategy by ID
 router.get('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const strategyId = req.params.id;
 
@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
 // Create a new strategy
 router.post('/', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     
     // Validate request body
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
 // Update a strategy
 router.put('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const strategyId = req.params.id;
 
@@ -138,7 +138,7 @@ router.put('/:id', async (req, res) => {
 // Delete a strategy
 router.delete('/:id', async (req, res) => {
   try {
-    const db = getClient();
+    const db = await connectToDatabase();
     const userId = req.user.id;
     const strategyId = req.params.id;
 
