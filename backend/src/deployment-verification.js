@@ -1,24 +1,25 @@
 /**
  * Deployment Verification Script
- * 
+ *
  * This script verifies that all critical endpoints of the Nick the Great API
  * are functioning correctly. It tests authentication, database connections,
  * and API functionality.
- * 
+ *
  * Dependencies:
  * - Requires `node-fetch`: Run `npm install node-fetch` in the backend directory.
- * 
+ *
  * Usage:
  * - Local testing: node deployment-verification.js
  * - Remote testing: node deployment-verification.js https://nick-the-great.onrender.com
- * 
+ *
  * Note: This script creates test data (user, strategy, resource) and attempts
  * to clean up the strategy and resource afterwards. The test user needs to be
  * deleted manually. It also uses a hardcoded password for the test user, which
  * is acceptable for this internal script but should be handled carefully.
  */
 
-const fetch = require('node-fetch'); // Ensure node-fetch is installed
+const fetch = require('node-fetch');
+global.fetch = require('node-fetch'); // Make fetch global
 const { promisify } = require('util');
 const { exec } = require('child_process');
 const execAsync = promisify(exec);
@@ -87,14 +88,14 @@ async function makeRequest(endpoint, options = {}) {
 async function verifyDeployment() {
   console.log('\n=== NICK THE GREAT API DEPLOYMENT VERIFICATION ===');
   console.log(`Testing API at: ${BASE_URL}`);
-  
+
   let token = null;
   let userId = null;
-  
+
   // Step 1: Check health endpoint
   console.log('\n--- Step 1: Health Check ---');
   const healthCheck = await makeRequest('/health');
-  
+
   if (healthCheck.ok && healthCheck.data.message === 'OK') {
     console.log('✅ Health check endpoint is working');
     console.log(`   Server uptime: ${healthCheck.data.uptime} seconds`);
@@ -103,16 +104,16 @@ async function verifyDeployment() {
     console.log('   This indicates a basic server connectivity issue');
     await askToContinue();
   }
-  
+
   // Step 2: Test registration
   console.log('\n--- Step 2: User Registration ---');
   console.log('Creating a test user for verification...');
-  
+
   // Generate a unique email for testing
   const testEmail = `test-${Date.now()}@example.com`;
   const testPassword = 'Password123!';
   const testName = 'Test User';
-  
+
   const registrationResult = await makeRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify({
@@ -121,7 +122,7 @@ async function verifyDeployment() {
       name: testName
     })
   });
-  
+
   if (registrationResult.ok) {
     console.log('✅ Registration endpoint is working');
     token = registrationResult.data.token;
@@ -132,10 +133,10 @@ async function verifyDeployment() {
     console.log(`   Error: ${JSON.stringify(registrationResult.data)}`);
     await askToContinue();
   }
-  
+
   // Step 3: Test login
   console.log('\n--- Step 3: User Login ---');
-  
+
   const loginResult = await makeRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({
@@ -143,7 +144,7 @@ async function verifyDeployment() {
       password: testPassword
     })
   });
-  
+
   if (loginResult.ok) {
     console.log('✅ Login endpoint is working');
     // Update token in case registration didn't work but login did
@@ -154,22 +155,22 @@ async function verifyDeployment() {
     console.log(`   Error: ${JSON.stringify(loginResult.data)}`);
     await askToContinue();
   }
-  
+
   if (!token) {
     console.log('\n⚠️ Unable to obtain authentication token. Cannot test authenticated endpoints.');
     return;
   }
-  
+
   // Step 4: Test authenticated API endpoints
   console.log('\n--- Step 4: Testing Authenticated Endpoints ---');
-  
+
   // Test strategies endpoint
   const strategiesResult = await makeRequest('/api/strategies', {
     headers: {
       'Authorization': `Bearer ${token}`
     }
   });
-  
+
   if (strategiesResult.ok) {
     console.log('✅ Strategies endpoint is working');
     console.log(`   Retrieved ${strategiesResult.data.length || 0} strategies`);
@@ -177,14 +178,14 @@ async function verifyDeployment() {
     console.log('❌ Strategies endpoint failed');
     console.log(`   Error: ${JSON.stringify(strategiesResult.data)}`);
   }
-  
+
   // Test resources endpoint
   const resourcesResult = await makeRequest('/api/resources', {
     headers: {
       'Authorization': `Bearer ${token}`
     }
   });
-  
+
   if (resourcesResult.ok) {
     console.log('✅ Resources endpoint is working');
     console.log(`   Retrieved ${resourcesResult.data.length || 0} resources`);
@@ -192,24 +193,24 @@ async function verifyDeployment() {
     console.log('❌ Resources endpoint failed');
     console.log(`   Error: ${JSON.stringify(resourcesResult.data)}`);
   }
-  
+
   // Test agent configuration endpoint
   const configResult = await makeRequest('/api/agent/config', {
     headers: {
       'Authorization': `Bearer ${token}`
     }
   });
-  
+
   if (configResult.ok) {
     console.log('✅ Agent configuration endpoint is working');
   } else {
     console.log('❌ Agent configuration endpoint failed');
     console.log(`   Error: ${JSON.stringify(configResult.data)}`);
   }
-  
+
   // Step 5: Test creating data
   console.log('\n--- Step 5: Testing Data Creation ---');
-  
+
   // Create a test strategy
   let strategyId;
   const testStrategy = {
