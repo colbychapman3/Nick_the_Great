@@ -12,6 +12,16 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+// --- Logging Middleware ---
+// Log all incoming requests (method, URL, headers)
+app.use((req, res, next) => {
+  console.log(`Request Method: ${req.method}`);
+  console.log(`Request URL: ${req.url}`);
+  console.log(`Request Headers: ${JSON.stringify(req.headers)}`);
+  next();
+});
+// --- End Logging Middleware ---
+
 // --- CORS Configuration ---
 // Define CORS options
 const corsOptions = {
