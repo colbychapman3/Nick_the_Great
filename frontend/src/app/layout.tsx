@@ -1,16 +1,9 @@
 import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font';
 import './globals.css'
 import { Providers } from './providers'
 
-const geistSans = GeistSans({
-  variable: '--font-geist-sans',
-})
-
-const geistMono = GeistMono({
-  variable: '--font-geist-mono',
-})
+const geistSans = GeistSans;
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -23,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={geistSans.variable}>
         <Providers>
           {children}
         </Providers>
