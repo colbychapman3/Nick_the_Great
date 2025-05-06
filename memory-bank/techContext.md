@@ -52,13 +52,17 @@
 
 ## Tool Usage Patterns
 
-1. **Environment Variables**: Used extensively across all components. The backend uses the following environment variables:
-   - `MONGODB_URI`: MongoDB connection string
-   - `JWT_SECRET`: Secret key for JWT authentication
-   - `PORT`: Port number for the server
-   - `NODE_ENV`: Environment mode (development/production)
-   - `ABACUS_API_KEY`: API key for Abacus service
-   - `GOOGLE_CLOUD_API_KEY`: API key for Google Cloud services
+1. **Environment Variables**: Used extensively across all components. 
+   - Standardized documentation available in `env-variables.md`
+   - The backend uses the following environment variables:
+     - `MONGODB_URI`: MongoDB connection string
+     - `JWT_SECRET`: Secret key for JWT authentication
+     - `PORT`: Port number for the server
+     - `NODE_ENV`: Environment mode (development/production)
+     - `ABACUS_API_KEY`: API key for Abacus service
+     - `GOOGLE_CLOUD_API_KEY`: API key for Google Cloud services
+   - Frontend (Vercel) uses variables with `NEXT_PUBLIC_` prefix
+   - Mobile app uses React Native Config for environment variables
 
 2. **API Proxying**: Implemented in Next.js configuration
 3. **gRPC Configuration**: Added to environment variables

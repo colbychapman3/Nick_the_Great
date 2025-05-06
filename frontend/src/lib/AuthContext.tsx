@@ -163,7 +163,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsAuthenticated(true);
     } catch (err: any) {
       console.error('Error during login', err);
-      setError(err.message || 'Login failed. Please try again.');
+      
+      // Handle network errors more explicitly
+      if (err.message === 'Failed to fetch') {
+        setError('Network error. Please check your internet connection or the server may be down.');
+      } else {
+        setError(err.message || 'Login failed. Please try again.');
+      }
+      
       setIsAuthenticated(false);
       setUser(null);
       throw err; // Re-throw the error for the component to handle
@@ -233,7 +240,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsAuthenticated(true);
     } catch (err: any) {
       console.error('Error during registration', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      
+      // Handle network errors more explicitly
+      if (err.message === 'Failed to fetch') {
+        setError('Network error. Please check your internet connection or the server may be down.');
+      } else {
+        setError(err.message || 'Registration failed. Please try again.');
+      }
+      
       setIsAuthenticated(false);
       setUser(null);
       throw err; // Re-throw the error for the component to handle
@@ -243,9 +257,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
+    // Clear all authentication data from localStorage
     localStorage.removeItem('token');
+    
+    // Optional: Clear any other auth-related items you might have stored
+    localStorage.removeItem('user');
+    
     setUser(null);
     setIsAuthenticated(false);
+    setError(null);
     
     // Redirect to login page is handled by the component using the hook
   };
