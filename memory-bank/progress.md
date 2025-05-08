@@ -76,6 +76,7 @@
 - ✅ Implemented stubbed AgentService methods in agent_core/main.py
 - Updated CreateExperiment method to initialize EbookGenerator
 - ✅ Updated CreateExperiment method to store experiment details in memory
+- ✅ Implemented StartExperiment method to call EbookGenerator
 
 - 🚧 Refactoring ebooks/generate_book.py into task_modules/ebook_generator.py
 - 🚧 Adding AbacusAI API key handling to EbookGenerator

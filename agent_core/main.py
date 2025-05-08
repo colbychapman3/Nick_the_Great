@@ -88,9 +88,22 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
             experiment["status"] = "RUNNING"
             logging.info(f"Starting experiment: id={experiment_id}, type={experiment['type']}, name={experiment['name']}")
 
-            # TODO: Implement actual logic to start the experiment (e.g., call EbookGenerator.generate_full_book)
+            # Call the EbookGenerator to generate the book
+            try:
+                topic = experiment["parameters"]["topic"]
+                audience = experiment["parameters"]["audience"]
+                output_dir = experiment["name"].replace(" ", "_").lower()  # Generate output directory from experiment name
+                num_chapters = 10 # Default number of chapters
 
-            return agent_pb2.StatusResponse(success=True, message=f"Experiment {experiment_id} started successfully")
+                experiment["generator"].generate_full_book(topic, audience, output_dir, num_chapters)
+                experiment["status"] = "COMPLETED"
+                return agent_pb2.StatusResponse(success=True, message=f"Experiment {experiment_id} started and completed successfully")
+
+            except Exception as e:
+                experiment["status"] = "FAILED"
+                logging.error(f"Error generating ebook: {e}")
+                return agent_pb2.StatusResponse(success=False, message=f"Error generating ebook: {e}")
+
         except Exception as e:
             logging.error(f"Error starting experiment: {e}")
             return agent_pb2.StatusResponse(success=False, message=f"Error starting experiment: {e}")
