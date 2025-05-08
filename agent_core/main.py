@@ -23,8 +23,30 @@ except ImportError as e:
 class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
     def CreateExperiment(self, request, context):
         logging.info(f"CreateExperiment called with request: {request}")
-        # TODO: Implement experiment creation logic
-        return agent_pb2.CreateExperimentResponse(id=agent_pb2.ExperimentId(id="not-implemented"), status=agent_pb2.StatusResponse(success=False, message="Not implemented yet"))
+        try:
+            # Extract experiment details from the request
+            experiment_type = request.definition.type
+            experiment_name = request.definition.name
+            experiment_description = request.definition.description
+            experiment_parameters = request.definition.parameters
+
+            logging.info(f"Creating experiment: type={experiment_type}, name={experiment_name}, description={experiment_description}, parameters={experiment_parameters}")
+
+            # TODO: Implement experiment creation logic based on experiment_type
+            # For now, just log the details and return a success message
+
+            experiment_id = "not-implemented"  # Replace with actual experiment ID generation
+
+            return agent_pb2.CreateExperimentResponse(
+                id=agent_pb2.ExperimentId(id=experiment_id),
+                status=agent_pb2.StatusResponse(success=True, message="Experiment creation initiated (logic not implemented yet)")
+            )
+        except Exception as e:
+            logging.error(f"Error creating experiment: {e}")
+            return agent_pb2.CreateExperimentResponse(
+                id=agent_pb2.ExperimentId(id="error"),
+                status=agent_pb2.StatusResponse(success=False, message=f"Error creating experiment: {e}")
+            )
 
     def StartExperiment(self, request, context):
         logging.info(f"StartExperiment called with request: {request}")
