@@ -115,8 +115,24 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
     def GetExperimentStatus(self, request, context):
         logging.info(f"GetExperimentStatus called with request: {request}")
-        # TODO: Implement experiment status retrieval logic
-        return agent_pb2.ExperimentStatus(id=request.id, state=agent_pb2.ExperimentState.STATE_UNSPECIFIED, status_message="Not implemented yet")
+        try:
+            experiment_id = request.id.id
+            if experiment_id not in self.experiments:
+                return agent_pb2.ExperimentStatus(id=request.id, state=agent_pb2.ExperimentState.STATE_UNSPECIFIED, status_message=f"Experiment with id {experiment_id} not found")
+
+            experiment = self.experiments[experiment_id]
+            experiment_state = getattr(agent_pb2.ExperimentState, experiment["status"]) # Convert string status to enum
+
+            return agent_pb2.ExperimentStatus(
+                id=request.id,
+                name=experiment["name"],
+                type=experiment["type"],
+                state=experiment_state,
+                status_message=f"Experiment {experiment_id} is in {experiment['status']} state"
+            )
+        except Exception as e:
+            logging.error(f"Error getting experiment status: {e}")
+            return agent_pb2.ExperimentStatus(id=request.id, state=agent_pb2.ExperimentState.STATE_UNSPECIFIED, status_message=f"Error getting experiment status: {e}")
 
     def GetAgentStatus(self, request, context):
         logging.info(f"GetAgentStatus called")
