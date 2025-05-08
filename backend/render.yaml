@@ -15,3 +15,7 @@ services:
         value: AIzaSyDvW-t7LRH3XtvKfcC8zAtLBYpEhaA4z_k
       - key: MONGODB_URI
         value: mongodb+srv://nick_the_great:hOdM4hyeTswFQjQF@cluster0.rzjjbtu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - key: AGENT_CORE_HOST
+        value: localhost
+      - key: AGENT_CORE_PORT
+        value: "50052"
