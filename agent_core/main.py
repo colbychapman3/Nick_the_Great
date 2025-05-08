@@ -32,6 +32,19 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
             logging.info(f"Creating experiment: type={experiment_type}, name={experiment_name}, description={experiment_description}, parameters={experiment_parameters}")
 
+            # Load the AbacusAI API key from environment variables
+            abacus_api_key = os.getenv('ABACUSAI_API_KEY')
+            if not abacus_api_key:
+                logging.error("ABACUSAI_API_KEY not found in environment variables")
+                return agent_pb2.CreateExperimentResponse(
+                    id=agent_pb2.ExperimentId(id="error"),
+                    status=agent_pb2.StatusResponse(success=False, message="ABACUSAI_API_KEY not found in environment variables")
+                )
+
+            # Initialize the EbookGenerator
+            from task_modules.ebook_generator import EbookGenerator
+            ebook_generator = EbookGenerator(abacus_api_key)
+
             # TODO: Implement experiment creation logic based on experiment_type
             # For now, just log the details and return a success message
 
@@ -39,7 +52,7 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
             return agent_pb2.CreateExperimentResponse(
                 id=agent_pb2.ExperimentId(id=experiment_id),
-                status=agent_pb2.StatusResponse(success=True, message="Experiment creation initiated (logic not implemented yet)")
+                status=agent_pb2.StatusResponse(success=True, message="Ebook experiment creation initiated (logic not fully implemented yet)")
             )
         except Exception as e:
             logging.error(f"Error creating experiment: {e}")
