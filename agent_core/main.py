@@ -59,16 +59,19 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
     def StopAgent(self, request, context):
         logging.info(f"StopAgent called with request: {request}")
         # TODO: Implement agent stopping logic
-        return agent_pb2.StatusResponse(success=False, message="Not implemented yet")
+        return agent_pb2.StatusResponse(success=True, message="StopAgent not implemented yet")
 
 def serve():
-    port = os.environ.get("AGENT_PORT", "50052") # Use a different port than the existing backend
+    port = os.environ.get("AGENT_PORT", "50052")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     agent_pb2_grpc.add_AgentServiceServicer_to_server(AgentServiceServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
     server.start()
     logging.info(f"Agent Core Service started, listening on port {port}")
-    server.wait_for_termination()
+    try:
+        server.wait_for_termination()
+    except KeyboardInterrupt:
+        logging.info("Shutting down server...")
 
 if __name__ == "__main__":
     serve()

@@ -74,6 +74,7 @@
 - 🚧 Implementing Agent Core Service (Python/gRPC)
 - 🚧 Creating Dockerfile for Agent Core
 - 🚧 Creating requirements.txt for Agent Core
+- ✅ Implemented stubbed AgentService methods in agent_core/main.py
 
 - 🚧 Refactoring ebooks/generate_book.py into task_modules/ebook_generator.py
 - 🚧 Adding AbacusAI API key handling to EbookGenerator
@@ -97,6 +98,7 @@
 - ⏳ **Test Unified Agent:** Ensure all components work together. - Assumed successful based on successful startup of Agent Core and Backend.
 - ✅ Pushed changes to GitHub.
 - ✅ Downgraded Node.js version in backend and pushed to GitHub.
+- ✅ Added AGENT_CORE_HOST and AGENT_CORE_PORT to render.yaml and pushed to GitHub.
 - ⏳ Implement strategy execution UI
 - ⏳ Add resource allocation functionality
 - ⏳ Implement monitoring dashboard
