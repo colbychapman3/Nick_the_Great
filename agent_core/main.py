@@ -78,8 +78,19 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
     def GetAgentStatus(self, request, context):
         logging.info(f"GetAgentStatus called")
-        # TODO: Implement agent status retrieval logic
-        return agent_pb2.AgentStatus(agent_state="IDLE", active_experiments=0, cpu_usage_percent=0.0, memory_usage_mb=0.0)
+        try:
+            # TODO: Implement actual logic to retrieve agent status
+            # For now, return some dummy data
+            agent_status = agent_pb2.AgentStatus(
+                agent_state="IDLE",
+                active_experiments=0,
+                cpu_usage_percent=10.5,
+                memory_usage_mb=500.2
+            )
+            return agent_status
+        except Exception as e:
+            logging.error(f"Error getting agent status: {e}")
+            return agent_pb2.AgentStatus(agent_state="ERROR", active_experiments=0, cpu_usage_percent=0.0, memory_usage_mb=0.0)
 
     def GetLogs(self, request, context):
         logging.info(f"GetLogs called with request: {request}")
