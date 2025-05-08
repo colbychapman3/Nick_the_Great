@@ -73,8 +73,27 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
     def StartExperiment(self, request, context):
         logging.info(f"StartExperiment called with request: {request}")
-        # TODO: Implement experiment starting logic
-        return agent_pb2.StatusResponse(success=False, message="Not implemented yet")
+        try:
+            experiment_id = request.id.id
+            if experiment_id not in self.experiments:
+                return agent_pb2.StatusResponse(success=False, message=f"Experiment with id {experiment_id} not found")
+
+            experiment = self.experiments[experiment_id]
+            if experiment["status"] != "DEFINED":
+                return agent_pb2.StatusResponse(success=False, message=f"Experiment with id {experiment_id} is not in DEFINED state")
+
+            # TODO: Implement Autonomy Framework interaction before starting the experiment
+
+            # Start the experiment
+            experiment["status"] = "RUNNING"
+            logging.info(f"Starting experiment: id={experiment_id}, type={experiment['type']}, name={experiment['name']}")
+
+            # TODO: Implement actual logic to start the experiment (e.g., call EbookGenerator.generate_full_book)
+
+            return agent_pb2.StatusResponse(success=True, message=f"Experiment {experiment_id} started successfully")
+        except Exception as e:
+            logging.error(f"Error starting experiment: {e}")
+            return agent_pb2.StatusResponse(success=False, message=f"Error starting experiment: {e}")
 
     def StopExperiment(self, request, context):
         logging.info(f"StopExperiment called with request: {request}")
