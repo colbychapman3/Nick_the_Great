@@ -56,7 +56,6 @@
 - ✅ Created middleware for routing
 - ✅ Added environment variables for production
 - ✅ Fixed CORS issues for production and preview environments
-- ✅ Fixed authentication issues between environments
 - ✅ Built backend API connectivity
 
 ### Project Analysis & Design (Phase 3)
@@ -76,6 +75,7 @@
 - 🚧 Creating requirements.txt for Agent Core
 - ✅ Implemented stubbed AgentService methods in agent_core/main.py
 - Updated CreateExperiment method to initialize EbookGenerator
+- ✅ Updated CreateExperiment method to store experiment details in memory
 
 - 🚧 Refactoring ebooks/generate_book.py into task_modules/ebook_generator.py
 - 🚧 Adding AbacusAI API key handling to EbookGenerator
@@ -187,10 +187,10 @@ agent_core/main.py
 memory-bank/progress.md
 
 # Current Time
-5/8/2025, 1:11:59 AM (America/New_York, UTC-4:00)
+5/8/2025, 1:13:11 AM (America/New_York, UTC-4:00)
 
 # Context Window Usage
-194,182 / 1,048.576K tokens used (18%)
+205,814 / 1,048.576K tokens used (19%)
 
 # Current Mode
 ACT MODE

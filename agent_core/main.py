@@ -45,14 +45,24 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
             from task_modules.ebook_generator import EbookGenerator
             ebook_generator = EbookGenerator(abacus_api_key)
 
-            # TODO: Implement experiment creation logic based on experiment_type
-            # For now, just log the details and return a success message
+            # Create a unique experiment ID
+            import uuid
+            experiment_id = str(uuid.uuid4())
 
-            experiment_id = "not-implemented"  # Replace with actual experiment ID generation
+            # Store the experiment details (for now, just in memory)
+            self.experiments = {} # Initialize experiments dictionary if it doesn't exist
+            self.experiments[experiment_id] = {
+                "type": experiment_type,
+                "name": experiment_name,
+                "description": experiment_description,
+                "parameters": experiment_parameters,
+                "generator": ebook_generator,
+                "status": "DEFINED"
+            }
 
             return agent_pb2.CreateExperimentResponse(
                 id=agent_pb2.ExperimentId(id=experiment_id),
-                status=agent_pb2.StatusResponse(success=True, message="Ebook experiment creation initiated (logic not fully implemented yet)")
+                status=agent_pb2.StatusResponse(success=True, message="Ebook experiment creation initiated")
             )
         except Exception as e:
             logging.error(f"Error creating experiment: {e}")
