@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs"); // Ensure this is installed and in package.json
 const { Configuration, OpenAIApi } = require("openai");
 const { connectToDatabase, getClient } = require("./db"); // Use the corrected db.js
+const { getAgentStatus } = require('./src/agent_client');
 
 // Load environment variables
 dotenv.config();
@@ -227,6 +228,15 @@ app.put("/api/agent/config", authenticateToken, async (req, res) => {
     res.json({ message: "Configuration updated", result });
   } catch (error) {
     res.status(500).json({ message: "Error updating agent configuration", error: error.message });
+  }
+});
+
+app.get("/api/agent/status", authenticateToken, async (req, res) => {
+  try {
+    const agentStatus = await getAgentStatus();
+    res.json(agentStatus);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching agent status", error: error.message });
   }
 });
 

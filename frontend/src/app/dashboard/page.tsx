@@ -1,10 +1,40 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 
+interface AgentStatus {
+  agent_state?: string;
+  active_experiments?: number;
+  cpu_usage_percent?: number;
+  memory_usage_mb?: number;
+  last_updated?: string; // Assuming timestamp is serialized as string
+  error?: string;
+}
+
 export default function DashboardPage() {
-const { user, isAuthenticated, isLoading, logout } = useAuth(); // This is correct, using isLoading
+const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+
+  useEffect(() => {
+    const fetchAgentStatus = async () => {
+      try {
+        const response = await fetch('/api/agent/status');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: AgentStatus = await response.json();
+        setAgentStatus(data);
+      } catch (error) {
+        console.error("Could not fetch agent status:", error);
+        setAgentStatus({ error: "Could not fetch agent status" });
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchAgentStatus();
+    }
+  }, [isAuthenticated]);
 
   // For client components in Next.js 13+, we handle redirects differently
   useEffect(() => {
@@ -75,6 +105,49 @@ const { user, isAuthenticated, isLoading, logout } = useAuth(); // This is corre
         <main>
           <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div className="px-4 py-8 sm:px-0">
+              {/* Agent Status Section */}
+              <div className="bg-white shadow overflow-hidden rounded-lg mb-4">
+                <div className="px-4 py-5 sm:px-6">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Agent Core Service Status</h3>
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                    Retrieving agent status...
+                  </p>
+                </div>
+                {agentStatus ? (
+                  agentStatus.error ? (
+                    <div className="px-4 py-5 sm:px-6">
+                      <p className="text-sm text-red-500">Error: {agentStatus.error}</p>
+                    </div>
+                  ) : (
+                    <div className="border-t border-gray-200">
+                      <dl>
+                        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                          <dt className="text-sm font-medium text-gray-500">Agent State</dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.agent_state || 'N/A'}</dd>
+                        </div>
+                        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                          <dt className="text-sm font-medium text-gray-500">Active Experiments</dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments || 'N/A'}</dd>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                          <dt className="text-sm font-medium text-gray-500">CPU Usage</dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent || 'N/A'}</dd>
+                        </div>
+                        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                          <dt className="text-sm font-medium text-gray-500">Memory Usage</dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb || 'N/A'}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  )
+                ) : (
+                  <div className="px-4 py-5 sm:px-6">
+                    <p className="text-sm text-gray-500">Loading agent status...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Development Mode Section */}
               <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4 bg-white">
                 <div className="text-center">
                   <h2 className="text-lg font-medium text-gray-900">Development Mode</h2>

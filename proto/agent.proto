@@ -1,10 +1,196 @@
 syntax = "proto3";
 
-service AgentService {
-  rpc ExecuteCommand (CommandRequest) returns (CommandResponse);
-  rpc StreamState (StateRequest) returns (stream StateUpdate);
+package nickthegreat;
+
+import "google/protobuf/timestamp.proto"; // For using timestamps
+import "google/protobuf/struct.proto";   // For flexible experiment parameters
+
+// ===================================================================
+// Enums
+// ===================================================================
+
+// Defines the possible states of an experiment
+enum ExperimentState {
+  STATE_UNSPECIFIED = 0;
+  STATE_DEFINED = 1;     // Experiment created but not started
+  STATE_RUNNING = 2;     // Experiment is actively running
+  STATE_PAUSED = 3;      // Experiment is temporarily stopped
+  STATE_COMPLETED = 4;   // Experiment finished successfully
+  STATE_FAILED = 5;      // Experiment encountered an error and stopped
+  STATE_STOPPED = 6;     // Experiment was manually stopped
 }
 
+// Defines the types of experiments the agent can run
+enum ExperimentType {
+  TYPE_UNSPECIFIED = 0;
+  FREELANCE_WRITING = 1;
+  NICHE_AFFILIATE_WEBSITE = 2;
+  AI_DRIVEN_EBOOKS = 3;
+  PINTEREST_STRATEGY = 4;
+  // Add other experiment types as needed
+}
+
+// Defines log levels for streaming logs
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+  CRITICAL = 5;
+}
+
+// ===================================================================
+// Core Messages
+// ===================================================================
+
+// Represents the definition of an experiment
+message ExperimentDefinition {
+  ExperimentType type = 1;                // Type of the experiment
+  string name = 2;                        // User-defined name for the experiment
+  string description = 3;                 // Brief description
+  google.protobuf.Struct parameters = 4;  // Flexible parameters specific to the experiment type (e.g., topic, audience for ebook; niche for website)
+  // Add other common definition fields if needed (e.g., budget, duration)
+}
+
+// Represents the unique identifier for an experiment
+message ExperimentId {
+  string id = 1; // e.g., UUID generated upon creation
+}
+
+// Represents the unique identifier for a decision requiring approval
+message DecisionId {
+  string id = 1; // e.g., UUID generated when decision is needed
+}
+
+// Represents the status of an operation or RPC call
+message StatusResponse {
+  bool success = 1;
+  string message = 2; // Optional message providing details
+  string error_code = 3; // Optional error code if success is false
+}
+
+// Represents the overall status of the agent
+message AgentStatus {
+  string agent_state = 1; // e.g., "IDLE", "RUNNING_EXPERIMENTS", "AWAITING_APPROVAL"
+  int32 active_experiments = 2;
+  double cpu_usage_percent = 3; // Example metric
+  double memory_usage_mb = 4;   // Example metric
+  google.protobuf.Timestamp last_updated = 5;
+}
+
+// Represents the detailed status of a specific experiment
+message ExperimentStatus {
+  ExperimentId id = 1;
+  string name = 2;
+  ExperimentType type = 3;
+  ExperimentState state = 4;
+  string status_message = 5; // e.g., "Generating chapter 3", "Awaiting budget approval"
+  google.protobuf.Struct metrics = 6; // Key performance indicators (e.g., revenue, clicks, progress %)
+  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp last_update_time = 8;
+  google.protobuf.Timestamp estimated_completion_time = 9; // Optional
+}
+
+// Represents a single log entry
+message LogEntry {
+  google.protobuf.Timestamp timestamp = 1;
+  LogLevel level = 2;
+  string message = 3;
+  ExperimentId experiment_id = 4; // Optional: associate log with an experiment
+  string source_component = 5; // e.g., "AgentCore", "EbookGenerator"
+}
+
+// ===================================================================
+// Service Request/Response Messages
+// ===================================================================
+
+// Request to create a new experiment
+message CreateExperimentRequest {
+  ExperimentDefinition definition = 1;
+}
+
+// Response containing the ID of the newly created experiment
+message CreateExperimentResponse {
+  ExperimentId id = 1;
+  StatusResponse status = 2;
+}
+
+// Request to start a specific experiment
+message StartExperimentRequest {
+  ExperimentId id = 1;
+}
+
+// Request to stop a specific experiment
+message StopExperimentRequest {
+  ExperimentId id = 1;
+}
+
+// Request to get the status of a specific experiment
+message GetExperimentStatusRequest {
+  ExperimentId id = 1;
+}
+
+// Request to get the overall agent status
+message GetAgentStatusRequest {
+  // No parameters needed for now
+}
+
+// Request to stream logs
+message GetLogsRequest {
+  ExperimentId experiment_id = 1; // Optional: filter logs by experiment
+  LogLevel minimum_level = 2;     // Filter logs by minimum severity level
+}
+
+// Request to approve a specific decision
+message ApproveDecisionRequest {
+  DecisionId decision_id = 1;
+  string user_id = 2; // Identifier for the approving user
+  bool approved = 3; // True if approved, false if rejected
+  string comment = 4; // Optional comment from the user
+}
+
+// Request to immediately stop all agent activities (kill switch)
+message StopAgentRequest {
+  string reason = 1; // Optional reason for stopping
+}
+
+// ===================================================================
+// Agent Service Definition
+// ===================================================================
+
+service AgentService {
+  // Creates a new experiment based on the provided definition
+  rpc CreateExperiment (CreateExperimentRequest) returns (CreateExperimentResponse);
+
+  // Starts a previously defined experiment
+  rpc StartExperiment (StartExperimentRequest) returns (StatusResponse);
+
+  // Stops a running or paused experiment
+  rpc StopExperiment (StopExperimentRequest) returns (StatusResponse);
+
+  // Retrieves the current status of a specific experiment
+  rpc GetExperimentStatus (GetExperimentStatusRequest) returns (ExperimentStatus);
+
+  // Retrieves the overall status of the agent
+  rpc GetAgentStatus (GetAgentStatusRequest) returns (AgentStatus);
+
+  // Streams log entries from the agent
+  rpc GetLogs (GetLogsRequest) returns (stream LogEntry);
+
+  // Allows a human collaborator to approve or reject a pending agent decision
+  rpc ApproveDecision (ApproveDecisionRequest) returns (StatusResponse);
+
+  // Immediately stops all agent activities (kill switch)
+  rpc StopAgent (StopAgentRequest) returns (StatusResponse);
+
+  // --- Deprecated / To be removed or refactored ---
+  // rpc ExecuteCommand (CommandRequest) returns (CommandResponse);
+  // rpc StreamState (StateRequest) returns (stream StateUpdate);
+}
+
+// --- Deprecated / To be removed or refactored ---
+/*
 message CommandRequest {
   string command_text = 1;
   string source = 2; // "cli", "mobile", or "web"
@@ -15,7 +201,12 @@ message CommandResponse {
   string message = 2;
 }
 
+message StateRequest {
+  // Define parameters if needed for state streaming
+}
+
 message StateUpdate {
   repeated string current_tasks = 1;
   string status_message = 2;
 }
+*/
