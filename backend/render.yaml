@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nick-the-great
+    name: nick-the-great-backend
     runtime: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && node src/index.js
@@ -15,7 +15,24 @@ services:
         value: AIzaSyDvW-t7LRH3XtvKfcC8zAtLBYpEhaA4z_k
       - key: MONGODB_URI
         value: mongodb+srv://nick_the_great:hOdM4hyeTswFQjQF@cluster0.rzjjbtu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      # Update AGENT_CORE_HOST to point to the internal name of the agent-core service
       - key: AGENT_CORE_HOST
-        value: localhost
+        value: nick-the-great-agent-core
+      # Update AGENT_CORE_PORT to match the port the agent-core service listens on
       - key: AGENT_CORE_PORT
-        value: "50052"
+        value: "50051"
+      # Add AbacusAI API key for the Ebook Generator task module
+      - key: ABACUSAI_API_KEY
+        value: your_abacusai_api_key_here # Replace with actual key
+
+  - type: web # Or 'worker' if it doesn't need public HTTP access
+    name: nick-the-great-agent-core
+    runtime: python
+    buildCommand: pip install -r agent_core/requirements.txt grpcio grpcio-tools python-dotenv abacusai # Install Python dependencies
+    startCommand: python agent_core/main.py # Command to start the agent core service
+    envVars:
+      - key: AGENT_CORE_PORT
+        value: "50051" # Port the agent core service listens on
+      # Add any other environment variables needed by the agent core or its task modules
+      - key: ABACUSAI_API_KEY
+        value: your_abacusai_api_key_here # Ensure this is also set here for the agent core

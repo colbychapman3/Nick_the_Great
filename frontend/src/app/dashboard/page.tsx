@@ -1,38 +1,87 @@
 "use client";
 
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 
-interface AgentStatus {
-  agent_state?: string;
-  active_experiments?: number;
-  cpu_usage_percent?: number;
-  memory_usage_mb?: number;
-  last_updated?: string; // Assuming timestamp is serialized as string
-  error?: string;
+// Define interfaces based on agent.proto messages (simplified for frontend)
+interface ExperimentId {
+  id: string;
 }
 
+interface ExperimentDefinition {
+  type: string; // Use string for enum name
+  name: string;
+  description: string;
+  parameters: any; // Use any for Struct, will be JSON-like object
+}
+
+interface ExperimentStatus {
+  id: ExperimentId;
+  name: string;
+  type: string; // Use string for enum name
+  state: string; // Use string for enum name
+  status_message: string;
+  metrics: any; // Use any for Struct
+  start_time?: { seconds: number, nanos: number }; // Timestamp structure
+  last_update_time?: { seconds: number, nanos: number };
+  estimated_completion_time?: { seconds: number, nanos: number };
+}
+
+interface AgentStatus {
+  agent_state: string;
+  active_experiments: number;
+  cpu_usage_percent: number;
+  memory_usage_mb: number;
+  last_updated?: { seconds: number, nanos: number }; // Timestamp structure
+}
+
+interface AgentStatusResponse extends AgentStatus {
+    error?: string; // Add error for fetch failures
+}
+
+
 export default function DashboardPage() {
-const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null);
+  const [experiments, setExperiments] = useState<ExperimentStatus[]>([]); // State for list of experiments
+  const [loadingStatus, setLoadingStatus] = useState(true);
 
   useEffect(() => {
-    const fetchAgentStatus = async () => {
+    const fetchAgentData = async () => {
+      setLoadingStatus(true);
       try {
-        const response = await fetch('/api/agent/status');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Fetch Agent Status
+        const statusResponse = await fetch('/api/agent/status');
+        if (!statusResponse.ok) {
+          throw new Error(`HTTP error fetching agent status! status: ${statusResponse.status}`);
         }
-        const data: AgentStatus = await response.json();
-        setAgentStatus(data);
-      } catch (error) {
-        console.error("Could not fetch agent status:", error);
-        setAgentStatus({ error: "Could not fetch agent status" });
+        const statusData: AgentStatus = await statusResponse.json();
+        setAgentStatus(statusData);
+
+        // TODO: Implement fetching list of experiments when backend endpoint is ready
+        // For now, using dummy data or empty array
+        // const experimentsResponse = await fetch('/api/agent/experiments');
+        // if (!experimentsResponse.ok) {
+        //   throw new Error(`HTTP error fetching experiments! status: ${experimentsResponse.status}`);
+        // }
+        // const experimentsData: ExperimentStatus[] = await experimentsResponse.json();
+        // setExperiments(experimentsData);
+
+      } catch (error: any) {
+        console.error("Could not fetch agent data:", error);
+        setAgentStatus({ error: error.message || "Could not fetch agent data", agent_state: 'UNKNOWN', active_experiments: 0, cpu_usage_percent: 0, memory_usage_mb: 0 }); // Set error state
+      } finally {
+          setLoadingStatus(false);
       }
     };
 
     if (isAuthenticated) {
-      fetchAgentStatus();
+      fetchAgentData();
+      // Optionally set up an interval to refresh status periodically
+      const intervalId = setInterval(fetchAgentData, 15000); // Refresh every 15 seconds
+      return () => clearInterval(intervalId); // Cleanup interval on unmount
     }
   }, [isAuthenticated]);
 
@@ -55,6 +104,14 @@ const { user, isAuthenticated, isLoading, logout } = useAuth();
   if (!isAuthenticated) {
     return null; // Will redirect from the useEffect
   }
+
+  // Helper to format timestamp
+  const formatTimestamp = (timestamp?: { seconds: number, nanos: number }) => {
+      if (!timestamp) return 'N/A';
+      const date = new Date(timestamp.seconds * 1000);
+      return date.toLocaleString(); // Or format as needed
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -110,7 +167,7 @@ const { user, isAuthenticated, isLoading, logout } = useAuth();
                 <div className="px-4 py-5 sm:px-6">
                   <h3 className="text-lg font-medium leading-6 text-gray-900">Agent Core Service Status</h3>
                   <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    Retrieving agent status...
+                    {loadingStatus ? 'Loading agent status...' : (agentStatus?.error ? 'Error fetching status.' : 'Current status of the Agent Core service.')}
                   </p>
                 </div>
                 {agentStatus ? (
@@ -127,15 +184,19 @@ const { user, isAuthenticated, isLoading, logout } = useAuth();
                         </div>
                         <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                           <dt className="text-sm font-medium text-gray-500">Active Experiments</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments || 'N/A'}</dd>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments ?? 'N/A'}</dd> {/* Use ?? for null/undefined check */}
                         </div>
                         <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                           <dt className="text-sm font-medium text-gray-500">CPU Usage</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent || 'N/A'}</dd>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent ?? 'N/A'}</dd>
                         </div>
                         <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                           <dt className="text-sm font-medium text-gray-500">Memory Usage</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb || 'N/A'}</dd>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb ?? 'N/A'}</dd>
+                        </div>
+                         <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                          <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{formatTimestamp(agentStatus.last_updated)}</dd>
                         </div>
                       </dl>
                     </div>
@@ -147,18 +208,75 @@ const { user, isAuthenticated, isLoading, logout } = useAuth();
                 )}
               </div>
 
-              {/* Development Mode Section */}
-              <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4 bg-white">
+              {/* Experiments List Section */}
+               <div className="bg-white shadow overflow-hidden rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Experiments</h3>
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                    List of experiments managed by the agent.
+                  </p>
+                </div>
+                <div className="border-t border-gray-200">
+                  {experiments.length === 0 ? (
+                    <div className="px-4 py-5 sm:px-6 text-sm text-gray-500">
+                      No experiments found.
+                    </div>
+                  ) : (
+                    <ul role="list" className="divide-y divide-gray-200">
+                      {experiments.map((experiment) => (
+                        <li key={experiment.id.id} className="px-4 py-4 sm:px-6">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {experiment.name} ({experiment.type})
+                            </div>
+                            <div className="ml-2 flex-shrink-0 flex">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                experiment.state === 'STATE_RUNNING' ? 'bg-blue-100 text-blue-800' :
+                                experiment.state === 'STATE_COMPLETED' ? 'bg-green-100 text-green-800' :
+                                experiment.state === 'STATE_FAILED' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {experiment.state}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2 sm:flex sm:justify-between">
+                            <div className="sm:flex">
+                              <p className="flex items-center text-sm text-gray-500">
+                                {experiment.status_message || 'No status message'}
+                              </p>
+                            </div>
+                            <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                {/* Display start time if available */}
+                                {experiment.start_time && (
+                                    <p className="mr-2">Started: {formatTimestamp(experiment.start_time)}</p>
+                                )}
+                                {/* Display last update time if available */}
+                                {experiment.last_update_time && (
+                                     <p>Last Update: {formatTimestamp(experiment.last_update_time)}</p>
+                                )}
+                            </div>
+                          </div>
+                           {/* TODO: Add buttons for Start/Stop/View Details */}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+
+              {/* Development Mode Section - Can be removed or repurposed later */}
+              {/*
+              <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4 bg-white mt-4">
                 <div className="text-center">
                   <h2 className="text-lg font-medium text-gray-900">Development Mode</h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    This is a placeholder dashboard for development purposes.
+                    This section can be used for development-specific tools or information.
                   </p>
-                  <div className="mt-6">
-                    {/* Added comment to force a change for git */}
-                  </div>
                 </div>
               </div>
+              */}
             </div>
           </div>
         </main>

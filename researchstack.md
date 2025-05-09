@@ -1,569 +1,1110 @@
-# Research Stack: Nick the Great
+# Research Stack: Nick the Great Unified Agent
 
-This document details the core technologies used in the Nick the Great project, including relevant code snippets, version information (where available from documentation), and key concepts based on research using Context7 and project file analysis.
+This document details the technical stack for the Nick the Great unified agent, compiled from research using the Context7 tool. It includes relevant documentation snippets, installation commands, and key concepts for each technology, adhering strictly to the information found within Context7.
 
-## 1. Next.js (`/vercel/next.js`)
+## Node.js/Express (Backend API, gRPC Client)
 
-**Description:** The React Framework.
-
-**Key Concepts & Features:**
-- **Pages Router & App Router:** Supports both routing paradigms.
-- **Data Fetching:** `getStaticProps`, `getServerSideProps`, `fetch` in Server Components.
-- **Client Components:** Use `'use client'` directive. Hooks like `useRouter`, `usePathname`, `useSearchParams`.
-- **API Routes:** Building backend endpoints within the Next.js application.
-- **Middleware:** Intercepting requests for logic like authentication or redirects.
-- **Static File Serving:** Serving assets from the `public` directory.
-- **Metadata API:** Defining `robots.txt`, `sitemap.xml`, etc.
-- **Third-Party Libraries:** Integration with external services and libraries.
-
-**Code Snippets:**
-
-*   **`getStaticProps` (TypeScript):** Fetch data at build time.
-    ```typescript
-    import type { InferGetStaticPropsType, GetStaticProps } from 'next'
-
-    type Repo = {
-      name: string
-      stargazers_count: number
-    }
-
-    export const getStaticProps = (async (context) => {
-      const res = await fetch('https://api.github.com/repos/vercel/next.js')
-      const repo = await res.json()
-      return { props: { repo } }
-    }) satisfies GetStaticProps<{
-      repo: Repo
-    }>
-
-    export default function Page({
-      repo,
-    }: InferGetStaticPropsType<typeof getStaticProps>) {
-      return repo.stargazers_count
-    }
-    ```
-*   **`getServerSideProps` (JavaScript):** Fetch data on each request.
-    ```javascript
-    export async function getServerSideProps() {
-      // Fetch data from external API
-      const res = await fetch('https://api.github.com/repos/vercel/next.js')
-      const repo = await res.json()
-      // Pass data to the page via props
-      return { props: { repo } }
-    }
-
-    export default function Page({ repo }) {
-      return (
-        <main>
-          <p>{repo.stargazers_count}</p>
-        </main>
-      )
-    }
-    ```
-*   **Client Component Search Param Update (JavaScript):**
-    ```jsx
-    'use client'
-
-    export default function ExampleClientComponent() {
-      const router = useRouter()
-      const pathname = usePathname()
-      const searchParams = useSearchParams()
-
-      // Get a new searchParams string by merging the current
-      // searchParams with a provided key/value pair
-      const createQueryString = useCallback(
-        (name, value) => {
-          const params = new URLSearchParams(searchParams)
-          params.set(name, value)
-
-          return params.toString()
-        },
-        [searchParams]
-      )
-
-      return (
-        <>
-          <p>Sort By</p>
-
-          {/* using useRouter */}
-          <button
-            onClick={() => {
-              // <pathname>?sort=asc
-              router.push(pathname + '?' + createQueryString('sort', 'asc'))
-            }}
-          >
-            ASC
-          </button>
-
-          {/* using <Link> */}
-          <Link
-            href={
-              // <pathname>?sort=desc
-              pathname + '?' + createQueryString('sort', 'desc')
-            }
-          >
-            DESC
-          </Link>
-        </>
-      )
-    }
-    ```
-*   **Basic Middleware (TypeScript):**
-    ```typescript
-    import { NextResponse, NextRequest } from 'next/server'
-
-    // This function can be marked `async` if using `await` inside
-    export function middleware(request: NextRequest) {
-      return NextResponse.redirect(new URL('/home', request.url))
-    }
-
-    export const config = {
-      matcher: '/about/:path*',
-    }
-    ```
-
-**Version:** Latest stable or canary recommended for new features (e.g., `next@latest` or `next@canary`). The project's `package.json` should be consulted for the specific version used.
-
-## 2. TypeScript (`/microsoft/typescript`)
-
-**Description:** A superset of JavaScript that compiles to clean JavaScript output.
-
-**Key Concepts & Features:**
-- **Static Typing:** Defining types for variables, function parameters, return values, objects, etc.
-- **Interfaces:** Defining contracts for object shapes.
-- **Classes:** Object-oriented programming features.
-- **Generics:** Creating reusable components that work with various types.
-- **Enums:** Defining sets of named constants.
-- **Modules:** Organizing code into reusable units (ES Modules syntax).
-- **Type Inference:** Automatic deduction of types by the compiler.
-- **Compiler Options (`tsconfig.json`):** Configuring the TypeScript compiler behavior.
-
-**Code Snippets:**
-
-*   **Basic Interface and Class:**
-    ```typescript
-    interface I {
-        id: number;
-    }
-
-    class C implements I {
-        id: number;
-    }
-    ```
-*   **Generic Function:**
-    ```typescript
-    function identity<T>(arg: T): T {
-        return arg;
-    }
-    ```
-*   **Enum Definition:**
-    ```typescript
-    enum Color {
-        Red,
-        Green,
-        Blue,
-    }
-    let c: Color = Color.Green;
-    ```
-*   **Type Alias:**
-    ```typescript
-    type Point = {
-        x: number;
-        y: number;
-    };
-
-    function printCoord(pt: Point) {
-        console.log("The coordinate's x value is " + pt.x);
-        console.log("The coordinate's y value is " + pt.y);
-    }
-
-    printCoord({ x: 100, y: 100 });
-    ```
-
-**Version:** Check `package.json` for the specific version used. Install with `npm install -D typescript`.
-
-## 3. Python (`/python/cpython`)
-
-**Description:** The Python programming language.
-
-**Key Concepts & Features:**
-- **Core Data Types:** Numbers (int, float), Strings, Lists, Tuples, Dictionaries, Sets, Booleans.
-- **Control Flow:** `if/elif/else`, `for`, `while`, `break`, `continue`.
-- **Functions:** Defining functions with `def`, arguments, return values, lambda functions.
-- **Classes:** Object-oriented programming with classes, inheritance, methods.
-- **Modules & Packages:** Organizing code using modules (`.py` files) and packages (directories with `__init__.py`). `import` statement.
-- **Standard Library:** Rich set of built-in modules.
-    - `os`: Interacting with the operating system (files, directories, processes).
-    - `sys`: System-specific parameters and functions (command-line args, paths).
-    - `json`: Working with JSON data.
-    - `datetime`: Date and time manipulation.
-    - `requests` (third-party, but common): Making HTTP requests.
-- **Error Handling:** `try...except...finally` blocks.
-- **Virtual Environments:** Isolating project dependencies (`venv`).
-
-**Code Snippets:**
-
-*   **Reading Command Line Arguments:**
-    ```python
-    import sys
-    print(sys.argv)
-    ```
-*   **Working with Files (os module):**
-    ```python
-    import os
-    # Get current working directory
-    cwd = os.getcwd()
-    # Change directory
-    os.chdir('/path/to/dir')
-    # List directory contents
-    contents = os.listdir('.')
-    ```
-*   **Working with JSON:**
-    ```python
-    import json
-    # Parse JSON string
-    data = json.loads('{"name": "John", "age": 30}')
-    # Convert Python dict to JSON string
-    json_string = json.dumps({"city": "New York"})
-    ```
-*   **Working with Dates (datetime module):**
-    ```python
-    from datetime import date, datetime
-    today = date.today()
-    now = datetime.now()
-    print(today.strftime("%Y-%m-%d"))
-    print(now.isoformat())
-    ```
-
-**Version:** Check system installation or virtual environment (`python --version`).
-
-## 4. gRPC (`/grpc/grpc.io`)
-
-**Description:** A high-performance, open source universal RPC framework. Uses Protocol Buffers by default.
-
-**Key Concepts & Features:**
-- **Protocol Buffers (`.proto`):** Language-neutral mechanism for serializing structured data. Define services and message types.
-- **Service Definition:** Defining RPC methods within a service block in `.proto`.
-- **RPC Types:**
-    - Unary: Client sends single request, server sends single response.
-    - Server Streaming: Client sends single request, server sends stream of responses.
-    - Client Streaming: Client sends stream of requests, server sends single response.
-    - Bidirectional Streaming: Client and server send streams of requests/responses independently.
-- **Code Generation:** Using `grpc_tools.protoc` (Python) or other language-specific tools to generate client stubs and server base classes from `.proto` files.
-- **Channels:** Representing a connection to a gRPC server.
-- **Stubs:** Client-side representation of the service used to make RPC calls.
-- **Servers:** Implementing the service interface and running the gRPC server.
-- **Async Support:** Many implementations offer asynchronous APIs (e.g., Python's `grpc.aio`).
-
-**Code Snippets (Python Focus):**
-
-*   **`.proto` Service Definition:**
-    ```protobuf
-    syntax = "proto3";
-
-    service Greeter {
-      rpc SayHello (HelloRequest) returns (HelloReply) {}
-    }
-
-    message HelloRequest {
-      string name = 1;
-    }
-
-    message HelloReply {
-      string message = 1;
-    }
-    ```
-*   **Generating Python Code:**
+*   **Context7 ID:** `/expressjs/express`
+*   **Description:** Fast, unopinionated, minimalist web framework for node.
+*   **Installation:**
     ```sh
-    python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. your_service.proto
+    $ npm install express
     ```
-*   **Creating Client Stub (Python):**
-    ```python
-    import grpc
-    import your_service_pb2
-    import your_service_pb2_grpc
-
-    channel = grpc.insecure_channel('localhost:50051')
-    stub = your_service_pb2_grpc.GreeterStub(channel)
-    ```
-*   **Making Unary Call (Python):**
-    ```python
-    request = your_service_pb2.HelloRequest(name='World')
-    response = stub.SayHello(request)
-    print("Greeter client received: " + response.message)
-    ```
-*   **Implementing Server (Python):**
-    ```python
-    import grpc
-    from concurrent import futures
-    import your_service_pb2
-    import your_service_pb2_grpc
-
-    class Greeter(your_service_pb2_grpc.GreeterServicer):
-        def SayHello(self, request, context):
-            return your_service_pb2.HelloReply(message=f"Hello, {request.name}!")
-
-    def serve():
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        your_service_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
-        server.add_insecure_port("[::]:50051")
-        server.start()
-        server.wait_for_termination()
-
-    if __name__ == '__main__':
-        serve()
-    ```
-
-**Version:** Check installed packages (`pip show grpcio grpcio-tools`).
-
-## 5. MongoDB (`/mongodb/docs`, `/mongodb/docs-pymongo`)
-
-**Description:** A NoSQL document database. Stores data in flexible, JSON-like documents (BSON).
-
-**Key Concepts & Features:**
-- **Documents:** BSON objects, analogous to rows in relational databases.
-- **Collections:** Groupings of documents, analogous to tables.
-- **Databases:** Containers for collections.
-- **CRUD Operations:** Create (insert), Read (find), Update, Delete.
-- **Query Language:** Rich query capabilities using query documents. Operators like `$eq`, `$gt`, `$lt`, `$in`, `$regex`, logical operators (`$and`, `$or`, `$not`).
-- **Aggregation Framework:** Processing data records and returning computed results. Stages like `$match`, `$group`, `$project`, `$sort`, `$limit`, `$unwind`, `$lookup`.
-- **Indexing:** Improving query performance. Single field, compound, multikey, text, geospatial indexes.
-- **Drivers:** Official drivers for various languages (e.g., PyMongo for synchronous Python, Motor for asynchronous Python).
-- **Transactions:** ACID-compliant multi-document transactions.
-
-**Code Snippets (PyMongo Focus):**
-
-*   **Connecting (PyMongo):**
-    ```python
-    from pymongo import MongoClient
-    # Replace with your connection string
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client['mydatabase'] # Select database
-    collection = db['mycollection'] # Select collection
-    ```
-*   **Inserting a Document (PyMongo):**
-    ```python
-    result = collection.insert_one({"name": "Alice", "age": 30, "city": "New York"})
-    print(f"Inserted document with id: {result.inserted_id}")
-    ```
-*   **Finding Documents (PyMongo):**
-    ```python
-    # Find one document
-    doc = collection.find_one({"name": "Alice"})
-    print(doc)
-
-    # Find multiple documents
-    cursor = collection.find({"age": {"$gt": 25}})
-    for document in cursor:
-        print(document)
-    ```
-*   **Updating a Document (PyMongo):**
-    ```python
-    result = collection.update_one({"name": "Alice"}, {"$set": {"age": 31}})
-    print(f"Matched {result.matched_count} document(s) and modified {result.modified_count} document(s)")
-    ```
-*   **Deleting a Document (PyMongo):**
-    ```python
-    result = collection.delete_one({"name": "Alice"})
-    print(f"Deleted {result.deleted_count} document(s)")
-    ```
-*   **Aggregation Example (PyMongo):**
-    ```python
-    pipeline = [
-        {"$match": {"status": "A"}},
-        {"$group": {"_id": "$cust_id", "total": {"$sum": "$price"}}},
-        {"$sort": {"total": -1}}
-    ]
-    results = db.orders.aggregate(pipeline)
-    for result in results:
-        print(result)
-    ```
-
-**Version:** Check installed packages (`pip show pymongo`). Consult `/mongodb/docs` for general MongoDB server versions and features.
-
-## 6. Node.js (`/nodejs/node`)
-
-**Description:** Node.js JavaScript runtime built on Chrome's V8 JavaScript engine.
-
-**Key Concepts & Features:**
-- **Asynchronous Event-Driven Architecture:** Non-blocking I/O model.
-- **Event Loop:** Orchestrates asynchronous operations.
-- **Modules:** CommonJS (`require`) and ES Modules (`import`).
-- **npm (Node Package Manager):** Managing project dependencies (`package.json`).
-- **Core Modules:**
-    - `fs`: File system operations (async and sync).
-    - `path`: Handling file paths.
-    - `http`/`https`: Creating HTTP/HTTPS servers and clients.
-    - `os`: Operating system information.
-    - `events`: Implementing event emitters and listeners.
-    - `child_process`: Spawning child processes (`exec`, `spawn`, `fork`).
-    - `async_hooks`/`async_context`: Tracking asynchronous resources and context propagation.
-- **Streams:** Handling streaming data (Readable, Writable, Duplex, Transform).
-- **Buffers:** Working with binary data.
-- **Error Handling:** Callback patterns (error-first), Promises (`.catch()`), `try...catch` with `async/await`.
-
-**Code Snippets:**
-
-*   **Reading a File Asynchronously (fs module):**
+*   **Basic Usage (Initializing Server):**
     ```javascript
-    const fs = require('node:fs');
+    import express from 'express'
 
-    fs.readFile('/etc/passwd', 'utf8', (err, data) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      console.log(data);
-    });
-    ```
-*   **Creating an HTTP Server (http module):**
-    ```javascript
-    const http = require('node:http');
-
-    const server = http.createServer((req, res) => {
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('Hello World\n');
-    });
-
-    server.listen(3000, '127.0.0.1', () => {
-      console.log('Server running at http://127.0.0.1:3000/');
-    });
-    ```
-*   **Using Promises with `fs.promises`:**
-    ```javascript
-    const fs = require('node:fs/promises');
-
-    async function readFileAsync() {
-      try {
-        const data = await fs.readFile('/etc/passwd', 'utf8');
-        console.log(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    readFileAsync();
-    ```
-*   **Spawning a Child Process (`exec`):**
-    ```javascript
-    const { exec } = require('node:child_process');
-    exec('ls -lh /usr', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      console.error(`stderr: ${stderr}`);
-    });
-    ```
-
-**Version:** Check system installation (`node -v`).
-
-## 7. Express.js (`/expressjs/express`)
-
-**Description:** Fast, unopinionated, minimalist web framework for Node.js.
-
-**Key Concepts & Features:**
-- **Routing:** Defining how the application responds to client requests to specific endpoints (URIs) and HTTP methods (`app.get()`, `app.post()`, etc.). Route parameters, query strings.
-- **Middleware:** Functions that have access to the request object (`req`), the response object (`res`), and the next middleware function in the application’s request-response cycle (`next`). Used for logging, authentication, data validation, error handling, etc.
-- **Request Object (`req`):** Contains information about the incoming request (e.g., `req.params`, `req.query`, `req.body`, `req.headers`).
-- **Response Object (`res`):** Used to send a response back to the client (e.g., `res.send()`, `res.json()`, `res.status()`, `res.render()`, `res.redirect()`).
-- **Application Object (`app`):** Instance of Express used to configure routes, middleware, and settings.
-- **Templating Engines:** Integration with view engines (like EJS, Pug, Handlebars) for rendering dynamic HTML (`res.render()`).
-- **Static Files:** Serving static assets like CSS, JavaScript, images (`express.static()` middleware).
-- **Error Handling:** Defining error-handling middleware functions.
-
-**Code Snippets:**
-
-*   **Basic Server Setup:**
-    ```javascript
-    import express from 'express'; // Or const express = require('express');
-
-    const app = express();
-    const port = 3000;
+    const app = express()
 
     app.get('/', (req, res) => {
-      res.send('Hello World!');
-    });
+      res.send('Hello World')
+    })
 
-    app.listen(port, () => {
-      console.log(`Example app listening on port ${port}`);
-    });
+    app.listen(3000)
     ```
-*   **Basic Routing:**
+*   **Key Concepts:**
+    *   `app.get('/', ...)`: Defining GET routes.
+    *   `res.send()`: Sending responses.
+    *   `app.listen()`: Starting the server.
+    *   `res.send(bool)`: Support for JSON boolean responses.
+    *   `res.send()`: Default string charset set to utf8.
+    *   `res.contentType()`: Supported literal types like '.json'.
+    *   `res.locals(obj)`: Bulk assignment of local variables.
+    *   `res.render()`: Support for response body with status options.
+    *   `res.header()`: Enhanced to send multiple Set-Cookie headers.
+    *   `res.redirect()`: Requires absolute URLs.
+    *   `res.sendfile()`: Responds with 403 on malicious paths.
+    *   `res.render()`: Added charset support.
+    *   `res.locals()`: Returns locals when called without arguments.
+    *   `res.send(undefined)`: Responds with HTTP 204 No Content.
+*   **Dependencies (from History.md snippets):** `express-session`, `finalhandler`, `method-override`, `morgan`, `qs`, `serve-index`, `serve-static`, `type-is`, `debug`, `ms`, `merge-descriptors`, `proxy-addr`, `ipaddr.js`, `send`, `etag`, `on-finished`, `connect`, `body-parser`, `compression`, `connect-timeout`, `cookie-parser`, `cookie-signature`, `csurf`, `errorhandler`, `http-errors`, `response-time`, `serve-favicon`, `vhost`, `fresh`, `media-typer`, `range-parser`, `vary`, `depd`, `forwarded`, `mime`, `multiparty`, `parseurl`, `on-headers`, `utils-merge`. (Note: Specific versions vary across history entries; refer to package.json for current project versions).
+
+## React/Next.js (Frontend UI)
+
+*   **Context7 ID:** `/reactjs/react.dev` (React), `/apollographql/apollo-client-integrations` (Next.js App Router Integration - most relevant Next.js snippet found)
+*   **Description:** The React documentation website. Apollo Client support for the Next.js App Router.
+*   **Installation (React - assumed via Next.js):** (No direct installation command for React itself provided in snippets, typically installed as a dependency).
+*   **Installation (Next.js - assumed via project setup):** (No direct installation command for Next.js itself provided in snippets, typically part of project initialization).
+*   **Basic Usage (Component Definition):**
     ```javascript
-    // GET method route
-    app.get('/users/:userId', (req, res) => {
-      res.send(`User ID: ${req.params.userId}`);
-    });
-
-    // POST method route
-    app.post('/users', (req, res) => {
-      res.send('Got a POST request');
-    });
+    export default function Profile() {
+      return (
+        <img
+          src="https://i.imgur.com/MK3eW3Am.jpg"
+          alt="Katherine Johnson"
+        />
+      )
+    }
     ```
-*   **Using Middleware:**
-    ```javascript
-    // Simple logger middleware
-    const myLogger = function (req, res, next) {
-      console.log('LOGGED');
-      next(); // Pass control to the next middleware
-    };
-    app.use(myLogger);
+*   **Key Concepts:**
+    *   **Components:** Building UI with reusable functions/classes.
+    *   **JSX:** Embedding HTML-like syntax in JavaScript.
+        ```jsx
+        <h1>
+          {user.name}
+        </h1>
+        ```
+        ```jsx
+        <img className="avatar" />
+        ```
+        ```jsx
+        <>...</>
+        ```
+    *   **Props:** Passing data to components.
+        ```javascript
+        function Avatar({ person, size }) { /* ... */ }
+        ```
+    *   **State (`useState`):** Managing component-specific data.
+        ```javascript
+        import { useState } from 'react';
+        const [state, setState] = useState(initialState)
+        ```
+        ```javascript
+        function handleClick() {
+          setCount(count + 1);
+        }
+        ```
+        ```javascript
+        setPlayer({
+          ...player,
+          score: player.score + 1,
+        });
+        ```
+    *   **Effects (`useEffect`):** Synchronizing with external systems.
+        ```javascript
+        useEffect(() => {
+          // Code here will run after *every* render
+        });
+        ```
+        ```javascript
+        useEffect(() => {
+          const intervalId = setInterval(onTick, 1000);
+          return () => clearInterval(intervalId);
+        }, []); // Dependency array
+        ```
+    *   **Context (`useContext`):** Sharing data across the component tree.
+        ```javascript
+        import { createContext, useContext, useState } from 'react';
+        const ThemeContext = createContext(null);
+        // ...
+        const theme = useContext(ThemeContext);
+        ```
+    *   **Conditional Rendering:** Using `&&` or ternary operator.
+        ```javascript
+        {isPacked && '✅'}
+        ```
+        ```javascript
+        {isLoggedIn ? (
+          <AdminPanel />
+        ) : (
+          <LoginForm />
+        )}
+        ```
+    *   **Lists (`map`):** Rendering collections of data.
+        ```javascript
+        const listItems = products.map(product =>
+          <li key={product.id}>
+            {product.title}
+          </li>
+        );
+        ```
+    *   **Event Handling:** Responding to user interactions.
+        ```javascript
+        <button onClick={handleClick}>
+          Click me!
+        </button>
+        ```
+    *   **Custom Hooks:** Reusing stateful logic.
+        ```javascript
+        function useData(url) { /* ... */ }
+        ```
+    *   **Suspense:** Handling loading states for data fetching.
+        ```jsx
+        <Suspense fallback={<TalksLoading />}>
+          <Talks confId={conf.id} />
+        </Suspense>
+        ```
+    *   **`use client` directive:** Marking Client Components in Next.js App Router.
+        ```javascript
+        "use client"
+        ```
+    *   **TypeScript:** Defining prop types.
+        ```typescript
+        function MyButton({ title }: { title: string }) { /* ... */ }
+        ```
 
-    // Middleware for parsing JSON request bodies
-    app.use(express.json());
+## React Native (Mobile App UI)
+
+*   **Context7 ID:** `/facebook/react-native-website`
+*   **Description:** The React Native website and docs.
+*   **Installation (Project Creation):**
+    ```shell
+    npx react-native@latest init AwesomeProject
     ```
-*   **Serving Static Files:**
-    ```javascript
-    app.use(express.static('public')); // Serve files from 'public' directory
+*   **Key Concepts:**
+    *   **Components:** Building UI with native components (`View`, `Text`, `Button`, `TextInput`, etc.).
+    *   **JSX:** Embedding UI elements in JavaScript/TypeScript.
+    *   **State (`useState`):** Managing component-specific data.
+        ```typescript
+        import React, {useState} from 'react';
+        const [count, setCount] = useState(0);
+        ```
+    *   **Effects (`useEffect`):** Handling side effects.
+        ```javascript
+        useEffect(() => {
+          const toggle = setInterval(() => { /* ... */ }, 1000);
+          return () => clearInterval(toggle);
+        });
+        ```
+    *   **Styling (`StyleSheet`):** Defining styles for components.
+        ```javascript
+        const styles = StyleSheet.create({
+          container: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        });
+        ```
+    *   **Layout (`Flexbox`):** Arranging components.
+        ```javascript
+        {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }
+        ```
+        Includes `rowGap`, `columnGap`, `gap`.
+    *   **Event Handling:** Responding to user interactions (`onPress`, `onChangeText`).
+        ```javascript
+        <Button onPress={() => setCount(count + 1)} title="Click me!" />
+        ```
+    *   **Navigation:** Moving between screens (examples show basic navigation with parameters).
+        ```typescript
+        navigation.navigate('Profile', {name: 'Jane'})
+        ```
+    *   **API Modules:** Accessing native device capabilities (`Linking`, `Clipboard`, `ToastAndroid`, `PushNotificationIOS`, `useColorScheme`, `useWindowDimensions`, `InteractionManager`).
+        ```javascript
+        await Linking.openURL(url);
+        ```
+        ```javascript
+        Clipboard.setString('hello world');
+        ```
+        ```javascript
+        ToastAndroid.show('A pikachu appeared nearby !', ToastAndroid.SHORT);
+        ```
+        ```typescript
+        import {useColorScheme} from 'react-native';
+        ```
+        ```typescript
+        const {height, width} = useWindowDimensions();
+        ```
+        ```typescript
+        InteractionManager.runAfterInteractions(() => onShown());
+        ```
+    *   **Performance Optimization:** `FlatList` with `getItemLayout`.
+        ```typescript
+        getItemLayout={(data, index) => (
+          {length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index}
+        )}
+        ```
+    *   **TypeScript:** Defining prop types and using type safety.
+        ```typescript
+        type BlinkProps = {
+          text: string;
+        };
+        const Blink = (props: BlinkProps) => { /* ... */ }
+        ```
+    *   **App Entry Point:** `AppRegistry.registerComponent`.
+        ```typescript
+        AppRegistry.registerComponent('Appname', () => App);
+        ```
+    *   **Native Integration:** Examples show initializing React Native in Android Activity (Kotlin).
+
+## Python (Agent Core, Task Modules, CLI)
+
+*   **Context7 ID:** `/python/cpython`
+*   **Description:** The Python programming language.
+*   **Installation (Virtual Environment):**
+    *   MacOS/Linux:
+        ```bash
+        $ python3 -m venv .venv
+        $ source .venv/bin/activate
+        ```
+    *   Windows:
+        ```batchfile
+        % .venv\Scripts\activate.bat
+        ```
+*   **Installation (Dependencies):**
+    *   Using `pip`:
+        ```bash
+        $ pip install -r requirements.txt
+        ```
+    *   Using `uv`:
+        ```bash
+        uv sync
+        ```
+        ```bash
+        source .venv/bin/activate
+        ```
+*   **Key Concepts:**
+    *   **Basic Syntax:** Variables, loops, functions, classes.
+    *   **Data Structures:** Lists, dictionaries, sets, tuples.
+        ```python
+        >>> cnt = Counter()
+        >>> for word in ['red', 'blue', 'red', 'green', 'blue', 'blue']:
+        ...     cnt[word] += 1
+        ...
+        >>> cnt
+        Counter({'blue': 3, 'red': 2, 'green': 1})
+        ```
+        ```python
+        >>> for f in sorted(set(basket)):
+        ...     print(f)
+        ...
+        apple
+        banana
+        orange
+        pear
+        ```
+        ```python
+        class LastUpdatedOrderedDict(OrderedDict):
+            'Store items in the order the keys were last added'
+            def __setitem__(self, key, value):
+                super().__setitem__(key, value)
+                self.move_to_end(key)
+        ```
+    *   **Functions:** Defining and calling functions.
+        ```python
+        def f(x):
+            return x*x
+        ```
+    *   **Classes:** Object-oriented programming.
+        ```python
+        class C(B):
+            def method(self, arg):
+                super().method(arg)
+        ```
+        Subclassing immutable types requires overriding `__new__`.
+    *   **Modules:** Importing and using code from other files.
+        ```python
+        import logging
+        import mylib
+        ```
+    *   **Error Handling:** `try...except`.
+    *   **File I/O:** Reading and writing files.
+        ```python
+        >>> with open('eggs.csv', newline='') as csvfile:
+        ...     spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        ...     for row in spamreader:
+        ...         print(', '.join(row))
+        ```
+        ```python
+        >>> with open('names.csv', newline='') as csvfile:
+        ...     reader = csv.DictReader(csvfile)
+        ...     for row in reader:
+        ...         print(row['first_name'], row['last_name'])
+        ```
+        ```python
+        >>> p = Path('my_text_file')
+        >>> p.write_text('Text file contents')
+        >>> p.read_text()
+        ```
+        ```python
+        TemporaryFile(mode='w+b', buffering=-1, encoding=None, newline=None, suffix=None, prefix=None, dir=None, *, errors=None)
+        ```
+    *   **Networking:** Making HTTP requests (`urllib.request`), secure connections (`ssl`, `smtplib`).
+        ```python
+        import urllib.request
+        local_filename, headers = urllib.request.urlretrieve('http://python.org/')
+        ```
+        ```python
+        >>> conn = context.wrap_socket(socket.socket(socket.AF_INET),
+        ...                            server_hostname="www.python.org")
+        >>> conn.connect(("www.python.org", 443))
+        ```
+        ```python
+        >>> import ssl, smtplib
+        >>> smtp = smtplib.SMTP("mail.python.org", port=587)
+        >>> context = ssl.create_default_context()
+        >>> smtp.starttls(context=context)
+        ```
+    *   **Concurrency/Parallelism:** `asyncio`, `multiprocessing`.
+        ```python
+        import asyncio
+        async def main():
+            await test() # Awaiting a coroutine
+        ```
+        ```python
+        async def wait_for(aw, timeout): # Waiting for awaitables with timeout
+            """
+            Wait for the *aw* :ref:`awaitable <asyncio-awaitables>`
+            to complete with a timeout.
+            ...
+            """
+        ```
+        ```python
+        async def worker(name, queue): # Asyncio Queue usage
+            while True:
+                sleep_for = await queue.get()
+                await asyncio.sleep(sleep_for)
+                queue.task_done()
+        ```
+        ```python
+        get_nowait() # Get from queue without blocking
+        ```
+        ```python
+        from multiprocessing import Pool # Using multiprocessing Pool
+        import time
+
+        def f(x):
+            return x*x
+
+        if __name__ == '__main__':
+            with Pool(processes=4) as pool:
+                result = pool.apply_async(f, (10,))
+                print(result.get(timeout=1))
+        ```
+        ```python
+        >>> with SharedMemoryManager() as smm: # SharedMemoryManager with context manager
+        ...     sl = smm.ShareableList(range(2000))
+        ...     # ... process with multiple processes ...
+        ...     total_result = sum(sl)
+        ```
+    *   **Command Line Interfaces (`argparse`):** Parsing command-line arguments.
+        ```python
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("echo") # Positional argument
+        args = parser.parse_args()
+        print(args.echo)
+        ```
+        ```python
+        parser.add_argument('--foo', default=42) # Default value
+        ```
+        ```python
+        parser.add_argument('--foo', nargs='?', const='c', default='d') # Nargs with question mark
+        ```
+        ```python
+        parser.add_argument('filename') # Positional and optional arguments
+        parser.add_argument('-c', '--count')
+        parser.add_argument('-v', '--verbose', action='store_true')
+        ```
+        ```python
+        parser = argparse.ArgumentParser(prog='PROG', prefix_chars='+/') # Custom prefix characters
+        ```
+        ```python
+        parser = argparse.ArgumentParser(prog='PROG') # Mutually exclusive argument group
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('--foo', action='store_true')
+        group.add_argument('--bar', action='store_false')
+        ```
+        ```python
+        parser.add_argument('bar', dest='bar') # Setting destination attribute name
+        ```
+        Handling wrong number of arguments results in an error and usage message.
+    *   **Testing (`unittest`, `unittest.mock`):** Writing and running tests.
+        ```python
+        if __name__ == '__main__':
+            unittest.main() # Using unittest.main
+        ```
+        ```python
+        from unittest.mock import MagicMock # Basic MagicMock usage
+        thing = ProductionClass()
+        thing.method = MagicMock(return_value=3)
+        thing.method(3, 4, 5, key='value')
+        thing.method.assert_called_with(3, 4, 5, key='value')
+        ```
+        ```python
+        mock = Mock(return_value=3) # Setting return values in Mock constructor
+        mock()
+        ```
+        ```python
+        mock = Mock(spec=3) # Using Mock objects with isinstance()
+        isinstance(mock, int)
+        ```
+        ```python
+        with self.assertWarns(SomeWarning): # Using assertWarns as a context manager
+            do_something()
+        ```
+    *   **Regular Expressions (`re`):** Pattern matching.
+        ```python
+        "$" # Matching end of string
+        ```
+        ```python
+        >>> m = re.match(r"(?P<first_name>\\w+) (?P<last_name>\\w+)", "Malcolm Reynolds") # Extracting named subgroups
+        >>> m.groupdict()
+        {'first_name': 'Malcolm', 'last_name': 'Reynolds'}
+        ```
+    *   **Logging (`logging`):** Recording application events.
+        ```python
+        import logging
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(filename='myapp.log', level=logging.INFO) # Basic configuration
+        logger.info('Started')
+        ```
+        ```python
+        # Logging to multiple destinations with different formats
+        import logging
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                            datefmt='%m-%d %H:%M',
+                            filename='/tmp/myapp.log',
+                            filemode='w')
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
+        ```
+        ```python
+        import json # Structured Logging with JSON Serialization
+        import logging
+
+        class StructuredMessage:
+            def __init__(self, message, /, **kwargs):
+                self.message = message
+                self.kwargs = kwargs
+
+            def __str__(self):
+                return '%s >>> %s' % (self.message, json.dumps(self.kwargs))
+
+        _ = StructuredMessage
+        logging.info(_('message 1', foo='bar', bar='baz', num=123, fnum=123.456))
+        ```
+        ```yaml
+        # Defining Logging Object Connections with YAML
+        formatters:
+          brief: {}
+          precise: {}
+        handlers:
+          h1:
+           formatter: brief
+          h2:
+           formatter: precise
+        loggers:
+          foo.bar.baz:
+            handlers: [h1, h2]
+        ```
+        ```python
+        def basicConfig(**kwargs): # Basic Configuration function signature
+            pass
+        ```
+    *   **String Formatting:** f-strings.
+        ```python
+        >>> who = 'nobody'
+        >>> nationality = 'Spanish'
+        >>> f'{who.title()} expects the {nationality} Inquisition!'
+        'Nobody expects the Spanish Inquisition!'
+        ```
+    *   **String Manipulation:** `split()`.
+        ```python
+        >>> '1,2,3'.split(',')
+        ['1', '2', '3']
+        ```
+    *   **Encoding:** Specifying source code encoding.
+        ```python
+        #!/usr/bin/env python
+        # -*- coding: latin-1 -*-
+        ```
+    *   **Data Conversion:** Bytes to Integer.
+        ```python
+        def from_bytes(bytes, byteorder='big', signed=False):
+            pass
+        ```
+    *   **Mathematical Functions:** `math.sqrt()`.
+        ```python
+        .. function:: sqrt(x)
+
+           Return the square root of *x*.
+        ```
+    *   **Itertools:** `roundrobin()`.
+        ```python
+        >>> list(roundrobin('abc', 'd', 'ef'))
+        ['a', 'd', 'e', 'b', 'f', 'c']
+        ```
+    *   **Subprocess:** `subprocess.check_output()`.
+        ```python
+        >>> subprocess.check_output(
+        ...     "ls non_existent_file; exit 0",
+        ...     stderr=subprocess.STDOUT,
+        ...     shell=True)
+        'ls: non_existent_file: No such file or directory\n'
+        ```
+    *   **Email:** Creating internationalized headers.
+        ```python
+        from email.message import Message
+        from email.header import Header
+        msg = Message()
+        h = Header('p\xf6stal', 'iso-8859-1')
+        msg['Subject'] = h
+        ```
+    *   **Decimal:** Precision and rounding.
+        ```python
+        >>> getcontext().prec = 6
+        >>> Decimal('3.1415926535') + Decimal('2.7182818285')
+        Decimal('5.85987')
+        ```
+    *   **Pathlib:** `Path.read_text()`, `Path.glob()`.
+        ```python
+        >>> sorted(Path('.').glob('*.py'))
+        [PosixPath('pathlib.py'), PosixPath('setup.py'), PosixPath('test_pathlib.py')]
+        ```
+    *   **SQLite:** Connecting, creating tables, using placeholders.
+        ```python
+        import sqlite3
+        con = sqlite3.connect("tutorial.db")
+        ```
+        ```python
+        cur.execute("CREATE TABLE movie(title, year, score)")
+        ```
+        ```python
+        cur.executemany("INSERT INTO lang VALUES(:name, :year)", data)
+        cur.execute("SELECT * FROM lang WHERE first_appeared = ?", params)
+        ```
+
+## gRPC (Inter-service Communication)
+
+*   **Context7 ID:** `/grpc/grpc.io`
+*   **Description:** Repository for the gRPC website and documentation.
+*   **Installation (Python):**
+    ```sh
+    pip install grpcio-tools
     ```
-*   **Basic Error Handling:**
-    ```javascript
-    app.use((err, req, res, next) => {
-      console.error(err.stack);
-      res.status(500).send('Something broke!');
-    });
-    ```
+*   **Installation (Node.js):** (Assumed via npm, no specific command snippet provided).
+*   **Key Concepts:**
+    *   **Protocol Buffers (`.proto`):** Defining services and messages.
+        ```protobuf
+        service HelloService {
+          rpc SayHello (HelloRequest) returns (HelloResponse);
+        }
 
-**Version:** Check `package.json` for the specific version used.
+        message HelloRequest {
+          string greeting = 1;
+        }
 
-## 8. AbacusAI (`abacusai` Python Client)
+        message HelloResponse {
+          string reply = 1;
+        }
+        ```
+        Includes definitions for simple, server-streaming, client-streaming, and bidirectional streaming RPCs.
+    *   **RPC Types:**
+        *   **Unary:** Single request, single response (`GetFeature`).
+            ```protobuf
+            // Obtains the feature at a given position.
+            rpc GetFeature(Point) returns (Feature) {}
+            ```
+        *   **Server Streaming:** Single request, stream of responses (`ListFeatures`).
+            ```protobuf
+            rpc ListFeatures(Rectangle) returns (stream Feature) {}
+            ```
+        *   **Client Streaming:** Stream of requests, single response (`RecordRoute`).
+            ```protobuf
+            rpc RecordRoute(stream Point) returns (RouteSummary) {}
+            ```
+        *   **Bidirectional Streaming:** Stream of requests, stream of responses (`RouteChat`).
+            ```protobuf
+            rpc RouteChat(stream RouteNote) returns (stream RouteNote) {}
+            ```
+    *   **Code Generation:** Using `protoc` to generate client and server code from `.proto` files.
+        ```sh
+        protoc --go_out=. --go_opt=paths=source_relative \
+            --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+            helloworld/helloworld.proto
+        ```
+    *   **Server Implementation:** Implementing the defined service methods.
+        *   Python:
+            ```python
+            def GetFeature(self, request, context):
+                feature = get_feature(self.db, request)
+                if feature is None:
+                    return route_guide_pb2.Feature(name="", location=request)
+                else:
+                    return feature
+            ```
+            ```python
+            def ListFeatures(self, request, context):
+                # ... yield features ...
+                pass
+            ```
+            ```python
+            def RouteChat(self, request_iterator, context):
+                # ... process stream and yield notes ...
+                pass
+            ```
+        *   Node.js:
+            ```javascript
+            function getServer() {
+              var server = new grpc.Server();
+              server.addService(routeguide.RouteGuide.service, { /* ... */ });
+              return server;
+            }
+            var routeServer = getServer();
+            routeServer.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+              routeServer.start();
+            });
+            ```
+            ```javascript
+            function getFeature(call, callback) {
+              callback(null, checkFeature(call.request));
+            }
+            ```
+        *   Java:
+            ```java
+            private class GreeterImpl extends GreeterGrpc.GreeterImplBase {
+              @Override
+              public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) { /* ... */ }
+              @Override
+              public void sayHelloAgain(HelloRequest req, StreamObserver<HelloReply> responseObserver) { /* ... */ }
+            }
+            ```
+            ```java
+            @Override
+            public StreamObserver<Point> recordRoute(final StreamObserver<RouteSummary> responseObserver) { /* ... */ }
+            ```
+            ```java
+            @Override
+            public StreamObserver<RouteNote> routeChat(final StreamObserver<RouteNote> responseObserver) { /* ... */ }
+            ```
+        *   Kotlin:
+            ```kotlin
+            private class HelloWorldService : GreeterGrpcKt.GreeterCoroutineImplBase() {
+              override suspend fun sayHello(request: HelloRequest) = helloReply { /* ... */ }
+              override suspend fun sayHelloAgain(request: HelloRequest) = helloReply { /* ... */ }
+            }
+            ```
+            ```kotlin
+            override suspend fun recordRoute(requests: Flow<Point>): RouteSummary { /* ... */ }
+            ```
+            ```kotlin
+            override fun routeChat(requests: Flow<RouteNote>): Flow<RouteNote> = flow { /* ... */ }
+            ```
+        *   C++:
+            ```cpp
+            Status GetFeature(ServerContext* context, const Point* point,
+                              Feature* feature) override { /* ... */ }
+            ```
+            ```cpp
+            class GreeterServiceImpl final : public Greeter::Service { /* ... */ }
+            ```
+            Asynchronous server implementation involves a completion queue and `HandleRpcs` loop.
+    *   **Client Implementation:** Creating stubs and making RPC calls.
+        *   Python:
+            ```python
+            channel = grpc.insecure_channel('localhost:50051')
+            stub = route_guide_pb2_grpc.RouteGuideStub(channel)
+            ```
+        *   Node.js:
+            ```javascript
+            var PROTO_PATH = __dirname + '/../../protos/route_guide.proto';
+            var grpc = require('@grpc/grpc-js');
+            var protoLoader = require('@grpc/proto-loader');
+            var packageDefinition = protoLoader.loadSync(PROTO_PATH, { /* ... */ });
+            var protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
+            var routeguide = protoDescriptor.routeguide;
+            // ... create stub ...
+            stub.getFeature(point, function(err, feature) { /* ... */ });
+            ```
+        *   Java:
+            ```java
+            public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder) {
+              channel = channelBuilder.build();
+              blockingStub = RouteGuideGrpc.newBlockingStub(channel);
+              asyncStub = RouteGuideGrpc.newStub(channel);
+            }
+            ```
+            ```java
+            Iterator<Feature> features;
+            try {
+              features = blockingStub.listFeatures(request);
+            } catch (StatusRuntimeException e) { /* ... */ }
+            ```
+            ```java
+            // Client-side streaming with async stub
+            StreamObserver<Point> requestObserver = asyncStub.recordRoute(responseObserver);
+            ```
+        *   Kotlin:
+            ```kotlin
+            val request = point(latitude, longitude)
+            val feature = stub.getFeature(request)
+            ```
+        *   C++:
+            ```cpp
+            auto channel = grpc::CreateChannel(server_name, channel_creds);
+            std::unique_ptr<Greeter::Stub> stub(Greeter::NewStub(channel));
+            grpc::Status s = stub->sayHello(&context, *request, response);
+            ```
+        *   Objective-C:
+            ```objectivec
+            [[service getFeatureWithMessage:point responseHandler:handler callOptions:nil] start];
+            ```
+        *   gRPC-Web (JavaScript):
+            ```javascript
+            const client = new ExampleServiceClient('https://api.example.com');
+            client.getExampleData(request, {}, (err, response) => { /* ... */ });
+            ```
+    *   **Authentication:** SSL/TLS, custom auth headers.
+        ```cpp
+        auto channel_creds = grpc::SslCredentials(grpc::SslCredentialsOptions());
+        auto channel = grpc::CreateChannel(server_name, channel_creds);
+        ```
+        ```javascript
+        const channelCreds = grpc.credentials.createSsl(rootCert);
+        const metaCallback = (_params, callback) => {
+            const meta = new grpc.Metadata();
+            meta.add('custom-auth-header', 'token');
+            callback(null, meta);
+        }
+        const callCreds = grpc.credentials.createFromMetadataGenerator(metaCallback);
+        const combCreds = grpc.credentials.combineChannelCredentials(channelCreds, callCreds);
+        const stub = new helloworld.Greeter('myservice.example.com', combCreds);
+        ```
+    *   **Interceptors:** Modifying requests/responses (gRPC-Web example).
+        ```javascript
+        /** @override */
+        SimpleUnaryInterceptor.prototype.intercept = function(request, invoker) { /* ... */ };
+        ```
 
-**Description:** AI platform (based on project usage). Interaction via Python client library.
+## MongoDB (Data Persistence)
 
-**Key Concepts & Features (Inferred from `generate_book.py`):**
-- **API Client:** Uses `abacusai.ApiClient` initialized with an API key.
-- **Text Generation:** Utilizes `client.text_generation()` method.
-- **Model Selection:** Can specify the underlying AI model (e.g., `claude-3-opus-20240229`).
-- **Parameters:** Accepts prompt, max_tokens, temperature, etc.
-- **Response Handling:** Accesses generated text via `response.generations[0].text`.
-- **Environment Variable:** Requires `ABACUSAI_API_KEY`.
-
-**Code Snippets (from `ebooks/generate_book.py`):**
-
-*   **Initialization:**
-    ```python
-    import os
-    from dotenv import load_dotenv
-    from abacusai import ApiClient
-
-    load_dotenv()
-    api_key = os.getenv('ABACUSAI_API_KEY')
-    client = ApiClient(api_key)
-    ```
-*   **Text Generation Call:**
-    ```python
-    prompt = "Your detailed prompt here..."
-    try:
-        response = client.text_generation(
-            prompt=prompt,
-            max_tokens=2000,
-            temperature=0.7,
-            model="claude-3-opus-20240229" # Example model
+*   **Context7 ID:** `/mongodb/docs`
+*   **Description:** The MongoDB Documentation Project Source.
+*   **Installation:** (Not covered in snippets, assumed to be set up).
+*   **Connection:**
+    *   Shell:
+        ```bash
+        mongosh "mongodb://localhost" --apiVersion 1 --username myDatabaseUser
+        ```
+        ```bash
+        mongosh "mongodb+srv://mongodb0.example.com/?authSource=admin&replicaSet=myRepl" --apiVersion 1 --username myDatabaseUser
+        ```
+        ```javascript
+        db = connect("localhost:27017/myDatabase")
+        ```
+        ```javascript
+        cluster = Mongo("mongodb://mymongo.example.net:27017/?replicaSet=myMongoCluster")
+        ```
+    *   Standard URI formats for various drivers:
+        ```bash
+        mongodb://myDatabaseUser:D1fficultP%40ssw0rd@mongodb0.example.com:27017,mongodb1.example.com:27017,mongodb2.example.com:27017/?authSource=admin&replicaSet=myRepl
+        ```
+        ```bash
+        mongodb+srv://myDatabaseUser:D1fficultP%40ssw0rd@cluster0.example.mongodb.net/?retryWrites=true&w=majority
+        ```
+*   **Key Concepts:**
+    *   **Documents:** Basic data structure (BSON).
+        ```javascript
+        {
+           field1: value1,
+           field2: value2,
+           ...
+        }
+        ```
+        Includes embedded documents with dot notation access.
+    *   **Collections:** Grouping documents.
+    *   **Databases:** Grouping collections.
+        ```javascript
+        use myDB
+        ```
+        ```javascript
+        myDB = cluster.getDB("myDB");
+        ```
+    *   **CRUD Operations:**
+        *   **Insert:** `insertOne()`, `insertMany()`, `insert()`.
+            ```javascript
+            db.inventory.insertOne(
+               { item: "canvas", qty: 100, tags: ["cotton"], size: { h: 28, w: 35.5, uom: "cm" } }
+            )
+            ```
+            ```javascript
+            db.inventory.insertMany([ /* ... */ ])
+            ```
+            `insert()` automatically adds `_id` if not specified.
+        *   **Read (Find):** `find()`.
+            ```javascript
+            db.inventory.find( {} ) // All documents
+            ```
+            ```javascript
+            db.inventory.find( { quantity: { $lt: 20 } } ) // With query operator
+            ```
+            ```javascript
+            db.bios.find( { contribs: "UNIX" } ) // Array querying
+            ```
+            Includes `$in`, `$all`, `$size` operators for arrays.
+        *   **Update:** `updateOne()`, `updateMany()`, `replaceOne()`, `findAndModify()`, `findOneAndUpdate()`, `findOneAndReplace()`, `bulkWrite()`.
+            ```javascript
+            db.products.updateOne(
+               { _id: 100 },
+               { $set: { "details.make": "Kustom Kidz" } } // Updating embedded field
+            )
+            ```
+            ```javascript
+            db.products.updateOne(
+               { _id: 100 },
+               { $set: { /* multiple fields */ } }
+            )
+            ```
+            ```javascript
+            db.products.updateOne(
+               { sku: "abc123" },
+               { $inc: { quantity: -2, "metrics.orders": 1 } } // $inc operator
+            )
+            ```
+            `updateMany` example with `$set` and `$currentDate`.
+            `bulkWrite` for multiple operations with write concern.
+        *   **Delete:** `deleteOne()`, `deleteMany()`.
+            ```javascript
+            db.collection.deleteOne( { status: "D" } )
+            ```
+    *   **Aggregation Framework:** `aggregate()`.
+        ```javascript
+        db.runCommand(
+           {
+             aggregate: "<collection>" || 1,
+             pipeline: [ <stage>, <...> ],
+             /* ... options ... */
+           }
         )
-        generated_text = response.generations[0].text
-        # Process generated_text
-    except Exception as e:
-        print(f"Error generating text: {e}")
+        ```
+        Includes stages like `$match`, `$group` (`$sum`), `$sort`, `$limit`, `$project`, `$unwind`, `$lookup`, `$setWindowFields`, `$search` (within `$lookup`).
+        ```javascript
+        { $sort : { count : -1 } } // Sorting
+        ```
+        ```javascript
+        { $unwind: <field path> } // Unwinding arrays
+        ```
+        ```javascript
+        { $project: { /* include/exclude fields */ } } // Projecting fields
+        ```
+        Comparison to SQL aggregation.
+    *   **Indexing:** `createIndex()`.
+        ```javascript
+        db.<collection>.createIndex( { <arrayField>: <sortOrder> } ) // Single field
+        ```
+        ```javascript
+        db.<collection>.createIndex( { <field1>: <sortOrder>, <field2>: <sortOrder>, ... } ) // Compound index
+        ```
+    *   **Transactions:** `startSession()`, `startTransaction()`, `commitTransaction()`, `abortTransaction()`.
+        ```javascript
+        session = db.getMongo().startSession( { readPreference: { mode: "primary" } } );
+        session.startTransaction( { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } } );
+        // ... operations ...
+        commitWithRetry(session); // Example retry logic
+        session.endSession();
+        ```
+        Includes `runTransactionWithRetry` function example.
+    *   **Explain:** `explain()`, `cursor.explain()`.
+        ```javascript
+        db.runCommand(
+           {
+             explain: <command>,
+             verbosity: <string>,
+             comment: <any>
+           }
+        )
+        ```
+    *   **Administration:** `listCollections()`, `shutdown()`.
+        ```javascript
+        db.adminCommand(
+           {
+              listCollections: 1,
+              nameOnly: true,
+              filter: { type: { $ne: "view" } }
+           }
+        )
+        ```
+        ```javascript
+        db.adminCommand( { shutdown: 1 } )
+        ```
+
+## AbacusAI / ACI (AI Integration)
+
+*   **Context7 ID:** `/aipotheosis-labs/aci` (Most relevant result for "AbacusAI" research)
+*   **Description:** ACI.dev is the open source platform that connects your AI agents to 600+ tool integrations with multi-tenant auth, granular permissions, and access through direct function calling or a unified MCP server.
+*   **Installation:**
+    *   Clone repository:
+        ```bash
+        git clone https://github.com/aipotheosis-labs/aci.git
+        ```
+    *   Navigate to backend:
+        ```bash
+        cd aci/backend
+        ```
+    *   Install backend dependencies (`uv`):
+        ```bash
+        uv sync
+        ```
+        ```bash
+        source .venv/bin/activate
+        ```
+    *   Install backend dependencies (`pip`):
+        ```bash
+        $ pip install -r requirements.txt
+        ```
+    *   Activate virtual environment (Windows):
+        ```batchfile
+        % .venv\Scripts\activate.bat
+        ```
+    *   Activate virtual environment (MacOS/Linux):
+        ```bash
+        $ source .venv/bin/activate
+        ```
+    *   Copy environment file:
+        ```bash
+        cp .env.example .env
+        ```
+    *   Install backend pre-commit hooks:
+        ```bash
+        pre-commit install
+        ```
+    *   Install frontend dependencies (`npm`):
+        ```Bash
+        npm install --legacy-peer-deps
+        ```
+    *   Install frontend pre-commit hooks:
+        ```Bash
+        pre-commit install
+        ```
+*   **Local Development:**
+    *   Start backend services (Docker Compose):
+        ```bash
+        docker compose up --build
+        ```
+    *   Start frontend dev server:
+        ```Bash
+        npm run dev
+        ```
+    *   Configure frontend environment variables (`.env`):
+        ```Shell
+        NEXT_PUBLIC_API_URL=http://localhost:8000
+        NEXT_PUBLIC_DEV_PORTAL_URL=http://localhost:3000
+        NEXT_PUBLIC_ENVIRONMENT=local
+        NEXT_PUBLIC_AUTH_URL=https://8367878.propelauthtest.com
+        ```
+    *   Expose local server with ngrok:
+        ```bash
+        ngrok http http://localhost:8000
+        ```
+*   **Database Management (Backend):**
+    *   Apply migrations:
+        ```bash
+        docker compose exec runner alembic upgrade head
+        ```
+    *   Generate migration:
+        ```bash
+        docker compose exec runner alembic revision --autogenerate -m "description of changes"
+        ```
+    *   Check migrations:
+        ```bash
+        docker compose exec runner alembic check
+        ```
+    *   Revert migration:
+        ```bash
+        docker compose exec runner alembic downgrade -1
+        ```
+    *   Seed database:
+        ```bash
+        docker compose exec runner ./scripts/seed_db.sh
+        ```
+*   **Testing (Backend):**
+    *   Run tests:
+        ```bash
+        docker compose exec runner pytest
+        ```
+*   **Testing (Frontend):**
+    *   Run unit tests (watch mode):
+        ```Bash
+        npm run test
+        ```
+    *   Generate coverage report:
+        ```Bash
+        npm run test:coverage
+        ```
+*   **Code Quality:**
+    *   Run linters (frontend):
+        ```Bash
+        npm run lint
+        ```
+    *   Format code (frontend):
+        ```Bash
+        npm run format
+        ```
+    *   VS Code settings for Python with Ruff:
+        ```json
+        {
+            "[python]": {
+              "editor.formatOnSave": true,
+              "editor.defaultFormatter": "charliermarsh.ruff",
+              "editor.codeActionsOnSave": {
+                "source.organizeImports.ruff": "always"
+              }
+            }
+        }
+        ```
+*   **Admin CLI:**
+    *   Show help:
+        ```bash
+        docker compose exec runner python -m aci.cli --help
+        ```
+    *   Available commands: `create-agent`, `create-project`, `create-random-api-key`, `delete-app`, `fuzzy-test-function-execution`, `get-app`, `rename-app`, `update-agent`, `upsert-app`, `upsert-functions`.
+    *   Create random API key:
+        ```bash
+        docker compose exec runner python -m aci.cli create-random-api-key --visibility-access public
+        ```
+    *   Create app:
+        ```bash
+        docker compose exec runner python -m aci.cli create-app --app-file ./apps/brave_search/app.json --secrets-file ./apps/brave_search/.app.secrets.json
+        ```
+*   **Deployment (AWS CDK):**
+    *   Synthesize CloudFormation template:
+        ```Bash
+        $ cdk synth
+        ```
+*   **Frontend Directory Structure:**
+    ```
+    src
+    ├── app (Next.js App Router folder)
+    ├── components
+    │   ├── ...
+    │   └── ui
+    ├── hooks
+    │   └── use-mobile.tsx
+    └── lib
+    │   ├── api
+    │   ├── types
+    │   └── utils.ts
+    └── __test__
+        ├── apps
+        ├── linked-accounts
+        ├── project-setting
+        └── ...
+    ```
+*   **Production Environment Variables (Vercel Example):**
+    ```Shell
+    NEXT_PUBLIC_API_URL=https://api.aci.dev
+    NEXT_PUBLIC_DEV_PORTAL_URL=https://platform.aci.dev
+    NEXT_PUBLIC_ENVIRONMENT=production
+    NEXT_PUBLIC_AUTH_URL=<actual_production_propelauth_endpoint>
     ```
 
-**Version:** Check installed packages (`pip show abacusai`). No specific version information was found via Context7.
+This research provides the foundational technical details, commands, and concepts necessary for implementing the unified agent system in Phase 4, strictly based on the information available through Context7.
