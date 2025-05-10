@@ -132,6 +132,7 @@ It's recommended to run services in separate terminal windows.
 1.  **Backend API:**
     ```bash
     cd backend
+    npm install
     npm run dev
     ```
     (Typically runs on `http://localhost:PORT` as defined in `backend/.env`)
@@ -139,6 +140,7 @@ It's recommended to run services in separate terminal windows.
 2.  **Frontend Web Application:**
     ```bash
     cd frontend
+    npm install
     npm run dev
     ```
     (Typically runs on `http://localhost:3000`)
@@ -147,18 +149,21 @@ It's recommended to run services in separate terminal windows.
     *   **Directly:**
         ```bash
         cd agent_core
-        python main.py
+        pip install -r requirements.txt
+        python -m agent_core.main
         ```
         (Listens on a gRPC port, e.g., `localhost:50051` as configured)
-    *   **Via Docker (if `Dockerfile` is configured for development):**
+    *   **Via Docker:**
         ```bash
-        # (Build command if needed)
-        docker run <agent-core-image-name>
+        cd agent_core
+        docker build -t nick-agent-core .
+        docker run -p 50051:50051 -e ABACUSAI_API_KEY=your_api_key_here nick-agent-core
         ```
 
 4.  **Mobile App:**
     ```bash
     cd mobile
+    npm install
     # For Android:
     npm run android
     # For iOS (macOS only):
@@ -166,10 +171,31 @@ It's recommended to run services in separate terminal windows.
     ```
 
 5.  **Using Docker Compose (Recommended for integrated local development):**
-    *   If a `docker-compose.yml` file is configured to run all services:
-        ```bash
-        docker-compose up --build
-        ```
+    ```bash
+    # Make sure to set the ABACUSAI_API_KEY in your environment or .env file
+    export ABACUSAI_API_KEY=your_api_key_here
+
+    # Build and start all services
+    docker-compose up --build
+
+    # Run in detached mode
+    docker-compose up -d
+
+    # Stop all services
+    docker-compose down
+    ```
+
+6.  **Running Tests:**
+    ```bash
+    # Run all tests
+    ./run_tests.sh
+
+    # Run tests for a specific component
+    ./run_tests.sh agent    # Run Agent Core tests
+    ./run_tests.sh backend  # Run Backend tests
+    ./run_tests.sh frontend # Run Frontend tests
+    ./run_tests.sh mobile   # Run Mobile tests
+    ```
 
 ## Deployment
 
@@ -186,6 +212,78 @@ Configuration for deployments (build commands, start commands, environment varia
 *   Collaborative workflow between AI and human operators.
 *   Parallel experimentation and progressive resource optimization.
 *   Comprehensive documentation and learning system.
+
+## Phase 4 Implementation (Completed)
+
+Phase 4 focused on the integration of the various components of the system:
+
+1. **Agent Core Service**: A Python-based gRPC server that manages experiments and orchestrates task execution.
+2. **Backend API**: A Node.js/Express server that acts as a gateway between the frontend and the Agent Core Service.
+3. **Task Modules**: Python modules that implement specific business tasks, such as ebook generation.
+4. **Frontend Dashboard**: A Next.js application for managing experiments and interacting with the agent.
+
+### Implemented Components
+
+* **Agent Core Service**:
+  * Experiment management with metrics tracking
+  * Task execution with proper error handling
+  * Autonomy framework integration for decision-making
+  * Kill switch functionality for stopping all agent activities
+  * Logging system for tracking agent activities
+  * Risk tolerance framework for assessing action risks
+  * Experimentation framework for testing different autonomy settings
+
+* **Backend API**:
+  * Integration with Agent Core Service via gRPC
+  * API endpoints for experiment management
+  * Authentication and authorization
+  * Experiment listing and status retrieval
+  * Database sync service for persistent storage
+
+* **Task Modules**:
+  * EbookGeneratorTask for AI-driven ebook creation
+  * FreelanceWritingTask for managing freelance writing projects
+  * NicheAffiliateWebsiteTask for creating and managing niche affiliate websites
+  * PinterestStrategyTask for implementing Pinterest marketing strategies
+
+* **Frontend Dashboard**:
+  * Agent status display with real-time updates
+  * Experiment management interface
+  * Experiment creation form
+  * Experiment details view with metrics
+  * Real-time updates for agent status
+
+* **Autonomy Framework**:
+  * Decision matrix for determining when the agent can act autonomously
+  * Notification system for alerting humans
+  * Approval workflow for requesting and processing human approvals
+  * Risk tolerance framework for assessing action risks
+  * Experimentation framework for testing different autonomy settings
+
+* **Persistent Storage**:
+  * MongoDB integration for storing experiment data
+  * Database sync service for synchronizing data between Agent Core and Backend
+  * Schema definitions for experiments, logs, and metrics
+
+* **Docker Compose**: Configuration for running the entire system locally.
+
+* **Testing Framework**: Comprehensive testing framework for all components:
+  * Unit tests for Agent Core Service, task modules, and autonomy framework
+  * Integration tests for the interaction between Agent Core and task modules
+  * Backend API tests for experiment management endpoints
+  * Frontend component tests for UI elements
+  * Test runner script for executing all tests
+  * End-to-end tests for the complete workflow
+
+### Next Steps (Phase 5)
+
+* Enhance the autonomy framework with machine learning-based decision-making
+* Add more detailed metrics and visualizations in the frontend dashboard
+* Implement the mobile app for on-the-go management
+* Add more task modules for additional experiment types
+* Implement advanced security features
+* Optimize performance and scalability
+* Enhance documentation and user guides
 
 ## Documentation & Memory Bank
 

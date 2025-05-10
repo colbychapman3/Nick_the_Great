@@ -1,4 +1,6 @@
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const mongoose = require("mongoose");
+const logger = require("./utils/logger");
 require("dotenv").config();
 
 // Get MongoDB connection URI from environment variables
@@ -36,23 +38,23 @@ async function connectToDatabase() {
   // If already connected, return the db instance
   // Check topology status for a more reliable connection check
   if (db && client.topology && client.topology.isConnected()) {
-    // console.log("Using existing MongoDB connection.");
+    logger.debug("Using existing MongoDB connection.");
     return db;
   }
 
   // If currently connecting, return the existing promise
   if (isConnecting && connectionPromise) {
-    // console.log("Waiting for existing MongoDB connection attempt...");
+    logger.debug("Waiting for existing MongoDB connection attempt...");
     return connectionPromise;
   }
 
-  // console.log("Attempting to connect to MongoDB...");
+  logger.info("Attempting to connect to MongoDB...");
   isConnecting = true;
   connectionPromise = (async () => {
     try {
       // Connect to the MongoDB cluster
       await client.connect();
-      console.log("Successfully connected to MongoDB!");
+      logger.info("Successfully connected to MongoDB!");
 
       // Get the database instance
       db = client.db("nick_agent"); // Ensure this matches your database name
@@ -60,10 +62,13 @@ async function connectToDatabase() {
       // Add listeners after successful connection
       addConnectionListeners();
 
+      // Set up mongoose connection (for models)
+      await setupMongooseConnection();
+
       isConnecting = false;
       return db;
     } catch (error) {
-      console.error("Failed to connect to MongoDB:", error);
+      logger.error("Failed to connect to MongoDB:", error);
       isConnecting = false;
       connectionPromise = null; // Reset promise on failure
       // Consider implementing a retry mechanism here if needed
@@ -72,6 +77,46 @@ async function connectToDatabase() {
   })();
 
   return connectionPromise;
+}
+
+/**
+ * Set up mongoose connection for models
+ */
+async function setupMongooseConnection() {
+  try {
+    // Check if mongoose is already connected
+    if (mongoose.connection.readyState === 1) {
+      logger.debug("Mongoose already connected");
+      return;
+    }
+
+    // Configure mongoose
+    mongoose.set('strictQuery', true);
+
+    // Connect to MongoDB using mongoose
+    await mongoose.connect(uri, {
+      dbName: "nick_agent",
+      // These options are no longer needed in newer mongoose versions
+      // but kept for compatibility with older versions
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+
+    logger.info("Mongoose connected successfully");
+
+    // Add mongoose connection event listeners
+    mongoose.connection.on('error', (err) => {
+      logger.error(`Mongoose connection error: ${err}`);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('Mongoose disconnected');
+    });
+
+  } catch (error) {
+    logger.error(`Error setting up mongoose connection: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
@@ -107,34 +152,42 @@ function addConnectionListeners() {
  * Close the MongoDB connection
  */
 async function closeConnection() {
-  // Check topology status before attempting to close
-  if (client && client.topology && client.topology.isConnected()) {
-    try {
-      await client.close();
-      console.log("MongoDB connection closed gracefully.");
-      db = null;
-    } catch (error) {
-      console.error("Error closing MongoDB connection:", error);
+  try {
+    // Close mongoose connection if connected
+    if (mongoose.connection.readyState === 1) {
+      logger.info("Closing mongoose connection...");
+      await mongoose.connection.close();
+      logger.info("Mongoose connection closed gracefully");
     }
+
+    // Check topology status before attempting to close MongoDB client
+    if (client && client.topology && client.topology.isConnected()) {
+      logger.info("Closing MongoDB client connection...");
+      await client.close();
+      logger.info("MongoDB client connection closed gracefully");
+      db = null;
+    }
+  } catch (error) {
+    logger.error(`Error closing database connections: ${error.message}`);
   }
 }
 
 // Process terminate handlers
 process.on("SIGINT", async () => {
-  console.log("Received SIGINT. Closing MongoDB connection...");
+  logger.info("Received SIGINT. Closing database connections...");
   await closeConnection();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("Received SIGTERM. Closing MongoDB connection...");
+  logger.info("Received SIGTERM. Closing database connections...");
   await closeConnection();
   process.exit(0);
 });
 
 // Handle unhandled promise rejections (optional but recommended)
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Rejection at:", { promise, reason });
   // Application specific logging, throwing an error, or other logic here
 });
 

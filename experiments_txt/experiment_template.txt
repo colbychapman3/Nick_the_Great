@@ -1,0 +1,150 @@
+# Experiment: [NAME]
+
+## Experiment ID: [ID]
+**Start Date:** [DATE]  
+**Status:** [Planning/Active/Paused/Completed/Terminated]  
+**Current Phase:** [Setup/Initial Testing/Optimization/Scaling]
+
+## Business Hypothesis
+
+**Core Hypothesis:** [Clear statement of what we expect this business model to achieve]
+
+**Key Assumptions:**
+1. [Assumption 1]
+2. [Assumption 2]
+3. [Assumption 3]
+
+**Success Prediction:** [What specific outcomes would validate this experiment]
+
+## Business Model Overview
+
+**Category:** [Digital Service/Content Creation/Digital Product/etc.]
+
+**Value Proposition:** [What value does this offer to customers/audience]
+
+**Revenue Mechanism:** [How exactly money will be generated]
+
+**Target Audience:** [Who are we serving with this experiment]
+
+**Competitive Advantage:** [What makes our approach unique or better]
+
+## Required Platforms & Resources
+
+**Primary Platform:** [Main platform where business will operate]
+
+**Additional Platforms:** [Secondary platforms for support, promotion, etc.]
+
+**AI Resources Required:**
+- [List AI tools/capabilities needed for this experiment]
+
+**Human Resources Required:**
+- [List human skills/time/actions needed for this experiment]
+
+**Additional Resources:**
+- [Any other resources needed for implementation]
+
+## Implementation Plan
+
+### Setup Phase
+
+**AI Tasks:**
+1. [Task description with expected output]
+2. [Task description with expected output]
+3. [Task description with expected output]
+
+**Human Tasks:**
+1. [Task description with expected output]
+2. [Task description with expected output]
+3. [Task description with expected output]
+
+**Setup Completion Criteria:** [How we know setup is complete and ready for launch]
+
+### Execution Phase
+
+**Regular AI Tasks:**
+1. [Recurring task description and frequency]
+2. [Recurring task description and frequency]
+3. [Recurring task description and frequency]
+
+**Regular Human Tasks:**
+1. [Recurring task description and frequency]
+2. [Recurring task description and frequency]
+3. [Recurring task description and frequency]
+
+**Execution Timeline:** [Expected schedule for implementation phases]
+
+## Metrics & Tracking
+
+**Primary Success Metric:** [The single most important metric for evaluating success]
+
+**Secondary Metrics:**
+1. [Metric name, how calculated, target]
+2. [Metric name, how calculated, target]
+3. [Metric name, how calculated, target]
+
+**Lead Indicators:** [Early signals that will predict later success/failure]
+
+**Tracking Method:** [How/where metrics will be documented and monitored]
+
+**Review Schedule:** [When metrics will be evaluated]
+
+## Resource Allocation
+
+**Initial Time Investment:**
+- AI: [Hours per day/week]
+- Human: [Hours per day/week]
+
+**Expected Evolution:**
+- [How resource requirements will change over time]
+
+**Maximum Resource Allocation:**
+- [Upper limit of resources to be allocated before reassessment]
+
+## Decision Framework
+
+**Continuation Criteria:** [Specific metrics that justify continuing this experiment]
+
+**Scaling Triggers:** [Thresholds that signal when to increase resource investment]
+
+**Adjustment Triggers:** [Signals that indicate need for approach modification]
+
+**Termination Criteria:** [Clear metrics that would cause experiment termination]
+
+## Current Status & Notes
+
+**Current Status Summary:**
+[Brief description of current state, progress, and immediate next steps]
+
+**Key Learnings:**
+- [Insight gained from experiment]
+- [Insight gained from experiment]
+
+**Recent Changes:**
+- [Date: Description of change implemented]
+- [Date: Description of change implemented]
+
+**Blockers/Issues:**
+- [Description of any current obstacles]
+- [Description of any current obstacles]
+
+**Opportunities:**
+- [Potential improvements identified]
+- [Potential improvements identified]
+
+---
+
+## Status Log
+
+### [Date]
+**Status:** [Planning/Active/Paused/Completed/Terminated]  
+**Metrics:** [Key metrics at this date]  
+**Changes Made:** [Any changes implemented]  
+**Notes:** [Observations, learnings, issues]  
+**Next Steps:** [Immediate next actions]
+
+### [Date]
+**Status:** [Planning/Active/Paused/Completed/Terminated]  
+**Metrics:** [Key metrics at this date]  
+**Changes Made:** [Any changes implemented]  
+**Notes:** [Observations, learnings, issues]  
+**Next Steps:** [Immediate next actions]

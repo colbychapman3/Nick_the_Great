@@ -129,6 +129,43 @@ function getAgentStatus() {
     });
 }
 
+// Function to list all experiments (this is a backend-only function since there's no gRPC endpoint for it)
+// It uses the existing experiment statuses stored in the Agent Core
+function listExperiments() {
+    return new Promise((resolve, reject) => {
+        // We'll use a workaround by getting the agent status first
+        getAgentStatus()
+            .then(() => {
+                // Now we'll try to get the status of some experiments
+                // This is a temporary solution until we implement a proper ListExperiments gRPC method
+                // For now, we'll maintain a list of experiment IDs in the backend
+                const experimentIds = global.experimentIds || [];
+
+                // If we have no experiment IDs, return an empty array
+                if (experimentIds.length === 0) {
+                    return resolve([]);
+                }
+
+                // Get the status of each experiment
+                const promises = experimentIds.map(id => getExperimentStatus(id));
+                Promise.all(promises)
+                    .then(statuses => {
+                        // Filter out any null or undefined statuses
+                        const validStatuses = statuses.filter(status => status && status.id);
+                        resolve(validStatuses);
+                    })
+                    .catch(err => {
+                        logging.error(`Error getting experiment statuses: ${err}`);
+                        reject(err);
+                    });
+            })
+            .catch(err => {
+                logging.error(`Error getting agent status: ${err}`);
+                reject(err);
+            });
+    });
+}
+
 // Function to stream logs from the agent
 function getLogs(experimentId, minimumLevel) {
     const request = {
@@ -187,6 +224,7 @@ module.exports = {
     stopExperiment,
     getExperimentStatus,
     getAgentStatus,
+    listExperiments,
     getLogs,
     approveDecision,
     stopAgent,

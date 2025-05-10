@@ -48,34 +48,42 @@ export default function DashboardPage() {
   const [experiments, setExperiments] = useState<ExperimentStatus[]>([]); // State for list of experiments
   const [loadingStatus, setLoadingStatus] = useState(true);
 
-  useEffect(() => {
-    const fetchAgentData = async () => {
-      setLoadingStatus(true);
-      try {
-        // Fetch Agent Status
-        const statusResponse = await fetch('/api/agent/status');
-        if (!statusResponse.ok) {
-          throw new Error(`HTTP error fetching agent status! status: ${statusResponse.status}`);
-        }
-        const statusData: AgentStatus = await statusResponse.json();
-        setAgentStatus(statusData);
-
-        // TODO: Implement fetching list of experiments when backend endpoint is ready
-        // For now, using dummy data or empty array
-        // const experimentsResponse = await fetch('/api/agent/experiments');
-        // if (!experimentsResponse.ok) {
-        //   throw new Error(`HTTP error fetching experiments! status: ${experimentsResponse.status}`);
-        // }
-        // const experimentsData: ExperimentStatus[] = await experimentsResponse.json();
-        // setExperiments(experimentsData);
-
-      } catch (error: any) {
-        console.error("Could not fetch agent data:", error);
-        setAgentStatus({ error: error.message || "Could not fetch agent data", agent_state: 'UNKNOWN', active_experiments: 0, cpu_usage_percent: 0, memory_usage_mb: 0 }); // Set error state
-      } finally {
-          setLoadingStatus(false);
+  // Define fetchAgentData outside useEffect so it can be referenced elsewhere
+  const fetchAgentData = async () => {
+    setLoadingStatus(true);
+    try {
+      // Fetch Agent Status
+      const statusResponse = await fetch('/api/agent/status');
+      if (!statusResponse.ok) {
+        throw new Error(`HTTP error fetching agent status! status: ${statusResponse.status}`);
       }
-    };
+      const statusData: AgentStatus = await statusResponse.json();
+      setAgentStatus(statusData);
+
+      // Fetch list of experiments
+      try {
+        const experimentsResponse = await fetch('/api/agent/experiments');
+        if (experimentsResponse.ok) {
+          const experimentsData: ExperimentStatus[] = await experimentsResponse.json();
+          setExperiments(experimentsData);
+        } else {
+          console.error(`HTTP error fetching experiments! status: ${experimentsResponse.status}`);
+          // Don't throw here, we'll just show empty experiments list
+        }
+      } catch (expError: any) {
+        console.error("Could not fetch experiments:", expError);
+        // Don't throw here, we'll just show empty experiments list
+      }
+
+    } catch (error: any) {
+      console.error("Could not fetch agent data:", error);
+      setAgentStatus({ error: error.message || "Could not fetch agent data", agent_state: 'UNKNOWN', active_experiments: 0, cpu_usage_percent: 0, memory_usage_mb: 0 }); // Set error state
+    } finally {
+        setLoadingStatus(false);
+    }
+  };
+
+  useEffect(() => {
 
     if (isAuthenticated) {
       fetchAgentData();
@@ -141,6 +149,7 @@ export default function DashboardPage() {
                     {user?.name}
                   </span>
                   <button
+                    type="button"
                     onClick={logout}
                     className="ml-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
@@ -177,28 +186,26 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="border-t border-gray-200">
-                      <dl>
-                        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                          <dt className="text-sm font-medium text-gray-500">Agent State</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.agent_state || 'N/A'}</dd>
-                        </div>
-                        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                          <dt className="text-sm font-medium text-gray-500">Active Experiments</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments ?? 'N/A'}</dd> {/* Use ?? for null/undefined check */}
-                        </div>
-                        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                          <dt className="text-sm font-medium text-gray-500">CPU Usage</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent ?? 'N/A'}</dd>
-                        </div>
-                        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                          <dt className="text-sm font-medium text-gray-500">Memory Usage</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb ?? 'N/A'}</dd>
-                        </div>
-                         <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                          <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{formatTimestamp(agentStatus.last_updated)}</dd>
-                        </div>
-                      </dl>
+                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <div className="text-sm font-medium text-gray-500">Agent State</div>
+                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.agent_state || 'N/A'}</div>
+                      </div>
+                      <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <div className="text-sm font-medium text-gray-500">Active Experiments</div>
+                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments ?? 'N/A'}</div>
+                      </div>
+                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <div className="text-sm font-medium text-gray-500">CPU Usage</div>
+                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent?.toFixed(2) ?? 'N/A'}%</div>
+                      </div>
+                      <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <div className="text-sm font-medium text-gray-500">Memory Usage</div>
+                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb?.toFixed(2) ?? 'N/A'} MB</div>
+                      </div>
+                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <div className="text-sm font-medium text-gray-500">Last Updated</div>
+                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{formatTimestamp(agentStatus.last_updated)}</div>
+                      </div>
                     </div>
                   )
                 ) : (
@@ -210,11 +217,22 @@ export default function DashboardPage() {
 
               {/* Experiments List Section */}
                <div className="bg-white shadow overflow-hidden rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Experiments</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    List of experiments managed by the agent.
-                  </p>
+                <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">Experiments</h3>
+                    <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                      List of experiments managed by the agent.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={() => {
+                      window.location.href = '/dashboard/experiments/new';
+                    }}
+                  >
+                    New Experiment
+                  </button>
                 </div>
                 <div className="border-t border-gray-200">
                   {experiments.length === 0 ? (
@@ -257,7 +275,68 @@ export default function DashboardPage() {
                                 )}
                             </div>
                           </div>
-                           {/* TODO: Add buttons for Start/Stop/View Details */}
+
+                          {/* Experiment Actions */}
+                          <div className="mt-3 flex space-x-2">
+                            {experiment.state === 'STATE_DEFINED' && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(`/api/agent/experiments/${experiment.id.id}/start`, {
+                                      method: 'POST',
+                                    });
+                                    if (response.ok) {
+                                      // Refresh data after starting experiment
+                                      fetchAgentData();
+                                    } else {
+                                      console.error('Failed to start experiment');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error starting experiment:', error);
+                                  }
+                                }}
+                              >
+                                Start
+                              </button>
+                            )}
+
+                            {experiment.state === 'STATE_RUNNING' && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(`/api/agent/experiments/${experiment.id.id}/stop`, {
+                                      method: 'POST',
+                                    });
+                                    if (response.ok) {
+                                      // Refresh data after stopping experiment
+                                      fetchAgentData();
+                                    } else {
+                                      console.error('Failed to stop experiment');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error stopping experiment:', error);
+                                  }
+                                }}
+                              >
+                                Stop
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              onClick={() => {
+                                // Navigate to experiment details page
+                                window.location.href = `/dashboard/experiments/${experiment.id.id}`;
+                              }}
+                            >
+                              View Details
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>

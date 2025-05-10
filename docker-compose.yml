@@ -35,8 +35,30 @@ services:
       - MONGODB_URI=mongodb://mongo:27017/nick_agent
       - JWT_SECRET=local_development_secret
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AGENT_CORE_HOST=agent-core
+      - AGENT_CORE_PORT=50051
+      - LOG_LEVEL=INFO
     depends_on:
       - mongo
+      - agent-core
+    networks:
+      - nick-network
+
+  # Agent Core service - Python/gRPC
+  agent-core:
+    build:
+      context: ./agent_core
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./agent_core:/app
+      - ./task_modules:/app/task_modules
+    environment:
+      - AGENT_CORE_PORT=50051
+      - ABACUSAI_API_KEY=${ABACUSAI_API_KEY}
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=3001
     networks:
       - nick-network
 

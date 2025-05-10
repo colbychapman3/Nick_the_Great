@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package nickthegreat.database;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "proto/agent.proto";
+
+// Service for synchronizing experiment data between Agent Core and Backend
+service DatabaseSyncService {
+  // Restore experiments from the database to the Agent Core
+  rpc RestoreExperiments(RestoreExperimentsRequest) returns (RestoreExperimentsResponse);
+  
+  // Sync experiment status from Agent Core to the database
+  rpc SyncExperimentStatus(SyncExperimentStatusRequest) returns (SyncStatusResponse);
+  
+  // Sync log entry from Agent Core to the database
+  rpc SyncLogEntry(SyncLogEntryRequest) returns (SyncStatusResponse);
+  
+  // Sync metrics from Agent Core to the database
+  rpc SyncMetrics(SyncMetricsRequest) returns (SyncStatusResponse);
+}
+
+// Request to restore experiments from the database
+message RestoreExperimentsRequest {
+  // Optional user ID to filter experiments by
+  string user_id = 1;
+  
+  // Optional experiment type to filter by
+  nickthegreat.ExperimentType experiment_type = 2;
+  
+  // Optional experiment state to filter by
+  nickthegreat.ExperimentState experiment_state = 3;
+  
+  // Maximum number of experiments to restore
+  int32 limit = 4;
+}
+
+// Response containing restored experiments
+message RestoreExperimentsResponse {
+  // Whether the operation was successful
+  bool success = 1;
+  
+  // Error message if not successful
+  string message = 2;
+  
+  // List of experiment statuses
+  repeated nickthegreat.ExperimentStatus experiments = 3;
+}
+
+// Request to sync experiment status
+message SyncExperimentStatusRequest {
+  // Experiment status to sync
+  nickthegreat.ExperimentStatus experiment_status = 1;
+}
+
+// Request to sync log entry
+message SyncLogEntryRequest {
+  // Log entry to sync
+  nickthegreat.LogEntry log_entry = 1;
+}
+
+// Request to sync metrics
+message SyncMetricsRequest {
+  // Experiment ID
+  nickthegreat.ExperimentId experiment_id = 1;
+  
+  // Metrics to sync
+  google.protobuf.Struct metrics = 2;
+  
+  // Timestamp of the metrics
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// Generic response for sync operations
+message SyncStatusResponse {
+  // Whether the operation was successful
+  bool success = 1;
+  
+  // Error message if not successful
+  string message = 2;
+}
