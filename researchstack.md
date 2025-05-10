@@ -8,7 +8,7 @@ This document details the technical stack for the Nick the Great unified agent, 
 *   **Description:** Fast, unopinionated, minimalist web framework for node.
 *   **Installation:**
     ```sh
-    $ npm install express
+    $ npm install express@4.18.2
     ```
 *   **Basic Usage (Initializing Server):**
     ```javascript
@@ -152,6 +152,11 @@ This document details the technical stack for the Nick the Great unified agent, 
         ```typescript
         function MyButton({ title }: { title: string }) { /* ... */ }
         ```
+
+*   **Dependencies:**
+    *   `next`: "^14.2.5"
+    *   `react`: "^18.2.0"
+    *   `react-dom`: "^18.2.0"
 
 ## React Native (Mobile App UI)
 
@@ -583,528 +588,38 @@ This document details the technical stack for the Nick the Great unified agent, 
         cur.execute("SELECT * FROM lang WHERE first_appeared = ?", params)
         ```
 
-## gRPC (Inter-service Communication)
-
-*   **Context7 ID:** `/grpc/grpc.io`
-*   **Description:** Repository for the gRPC website and documentation.
-*   **Installation (Python):**
-    ```sh
-    pip install grpcio-tools
-    ```
-*   **Installation (Node.js):** (Assumed via npm, no specific command snippet provided).
-*   **Key Concepts:**
-    *   **Protocol Buffers (`.proto`):** Defining services and messages.
-        ```protobuf
-        service HelloService {
-          rpc SayHello (HelloRequest) returns (HelloResponse);
-        }
-
-        message HelloRequest {
-          string greeting = 1;
-        }
-
-        message HelloResponse {
-          string reply = 1;
-        }
-        ```
-        Includes definitions for simple, server-streaming, client-streaming, and bidirectional streaming RPCs.
-    *   **RPC Types:**
-        *   **Unary:** Single request, single response (`GetFeature`).
-            ```protobuf
-            // Obtains the feature at a given position.
-            rpc GetFeature(Point) returns (Feature) {}
-            ```
-        *   **Server Streaming:** Single request, stream of responses (`ListFeatures`).
-            ```protobuf
-            rpc ListFeatures(Rectangle) returns (stream Feature) {}
-            ```
-        *   **Client Streaming:** Stream of requests, single response (`RecordRoute`).
-            ```protobuf
-            rpc RecordRoute(stream Point) returns (RouteSummary) {}
-            ```
-        *   **Bidirectional Streaming:** Stream of requests, stream of responses (`RouteChat`).
-            ```protobuf
-            rpc RouteChat(stream RouteNote) returns (stream RouteNote) {}
-            ```
-    *   **Code Generation:** Using `protoc` to generate client and server code from `.proto` files.
-        ```sh
-        protoc --go_out=. --go_opt=paths=source_relative \
-            --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-            helloworld/helloworld.proto
-        ```
-    *   **Server Implementation:** Implementing the defined service methods.
-        *   Python:
-            ```python
-            def GetFeature(self, request, context):
-                feature = get_feature(self.db, request)
-                if feature is None:
-                    return route_guide_pb2.Feature(name="", location=request)
-                else:
-                    return feature
-            ```
-            ```python
-            def ListFeatures(self, request, context):
-                # ... yield features ...
-                pass
-            ```
-            ```python
-            def RouteChat(self, request_iterator, context):
-                # ... process stream and yield notes ...
-                pass
-            ```
-        *   Node.js:
-            ```javascript
-            function getServer() {
-              var server = new grpc.Server();
-              server.addService(routeguide.RouteGuide.service, { /* ... */ });
-              return server;
-            }
-            var routeServer = getServer();
-            routeServer.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
-              routeServer.start();
-            });
-            ```
-            ```javascript
-            function getFeature(call, callback) {
-              callback(null, checkFeature(call.request));
-            }
-            ```
-        *   Java:
-            ```java
-            private class GreeterImpl extends GreeterGrpc.GreeterImplBase {
-              @Override
-              public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) { /* ... */ }
-              @Override
-              public void sayHelloAgain(HelloRequest req, StreamObserver<HelloReply> responseObserver) { /* ... */ }
-            }
-            ```
-            ```java
-            @Override
-            public StreamObserver<Point> recordRoute(final StreamObserver<RouteSummary> responseObserver) { /* ... */ }
-            ```
-            ```java
-            @Override
-            public StreamObserver<RouteNote> routeChat(final StreamObserver<RouteNote> responseObserver) { /* ... */ }
-            ```
-        *   Kotlin:
-            ```kotlin
-            private class HelloWorldService : GreeterGrpcKt.GreeterCoroutineImplBase() {
-              override suspend fun sayHello(request: HelloRequest) = helloReply { /* ... */ }
-              override suspend fun sayHelloAgain(request: HelloRequest) = helloReply { /* ... */ }
-            }
-            ```
-            ```kotlin
-            override suspend fun recordRoute(requests: Flow<Point>): RouteSummary { /* ... */ }
-            ```
-            ```kotlin
-            override fun routeChat(requests: Flow<RouteNote>): Flow<RouteNote> = flow { /* ... */ }
-            ```
-        *   C++:
-            ```cpp
-            Status GetFeature(ServerContext* context, const Point* point,
-                              Feature* feature) override { /* ... */ }
-            ```
-            ```cpp
-            class GreeterServiceImpl final : public Greeter::Service { /* ... */ }
-            ```
-            Asynchronous server implementation involves a completion queue and `HandleRpcs` loop.
-    *   **Client Implementation:** Creating stubs and making RPC calls.
-        *   Python:
-            ```python
-            channel = grpc.insecure_channel('localhost:50051')
-            stub = route_guide_pb2_grpc.RouteGuideStub(channel)
-            ```
-        *   Node.js:
-            ```javascript
-            var PROTO_PATH = __dirname + '/../../protos/route_guide.proto';
-            var grpc = require('@grpc/grpc-js');
-            var protoLoader = require('@grpc/proto-loader');
-            var packageDefinition = protoLoader.loadSync(PROTO_PATH, { /* ... */ });
-            var protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
-            var routeguide = protoDescriptor.routeguide;
-            // ... create stub ...
-            stub.getFeature(point, function(err, feature) { /* ... */ });
-            ```
-        *   Java:
-            ```java
-            public RouteGuideClient(ManagedChannelBuilder<?> channelBuilder) {
-              channel = channelBuilder.build();
-              blockingStub = RouteGuideGrpc.newBlockingStub(channel);
-              asyncStub = RouteGuideGrpc.newStub(channel);
-            }
-            ```
-            ```java
-            Iterator<Feature> features;
-            try {
-              features = blockingStub.listFeatures(request);
-            } catch (StatusRuntimeException e) { /* ... */ }
-            ```
-            ```java
-            // Client-side streaming with async stub
-            StreamObserver<Point> requestObserver = asyncStub.recordRoute(responseObserver);
-            ```
-        *   Kotlin:
-            ```kotlin
-            val request = point(latitude, longitude)
-            val feature = stub.getFeature(request)
-            ```
-        *   C++:
-            ```cpp
-            auto channel = grpc::CreateChannel(server_name, channel_creds);
-            std::unique_ptr<Greeter::Stub> stub(Greeter::NewStub(channel));
-            grpc::Status s = stub->sayHello(&context, *request, response);
-            ```
-        *   Objective-C:
-            ```objectivec
-            [[service getFeatureWithMessage:point responseHandler:handler callOptions:nil] start];
-            ```
-        *   gRPC-Web (JavaScript):
-            ```javascript
-            const client = new ExampleServiceClient('https://api.example.com');
-            client.getExampleData(request, {}, (err, response) => { /* ... */ });
-            ```
-    *   **Authentication:** SSL/TLS, custom auth headers.
-        ```cpp
-        auto channel_creds = grpc::SslCredentials(grpc::SslCredentialsOptions());
-        auto channel = grpc::CreateChannel(server_name, channel_creds);
-        ```
-        ```javascript
-        const channelCreds = grpc.credentials.createSsl(rootCert);
-        const metaCallback = (_params, callback) => {
-            const meta = new grpc.Metadata();
-            meta.add('custom-auth-header', 'token');
-            callback(null, meta);
-        }
-        const callCreds = grpc.credentials.createFromMetadataGenerator(metaCallback);
-        const combCreds = grpc.credentials.combineChannelCredentials(channelCreds, callCreds);
-        const stub = new helloworld.Greeter('myservice.example.com', combCreds);
-        ```
-    *   **Interceptors:** Modifying requests/responses (gRPC-Web example).
-        ```javascript
-        /** @override */
-        SimpleUnaryInterceptor.prototype.intercept = function(request, invoker) { /* ... */ };
-        ```
-
-## MongoDB (Data Persistence)
-
-*   **Context7 ID:** `/mongodb/docs`
-*   **Description:** The MongoDB Documentation Project Source.
-*   **Installation:** (Not covered in snippets, assumed to be set up).
-*   **Connection:**
-    *   Shell:
-        ```bash
-        mongosh "mongodb://localhost" --apiVersion 1 --username myDatabaseUser
-        ```
-        ```bash
-        mongosh "mongodb+srv://mongodb0.example.com/?authSource=admin&replicaSet=myRepl" --apiVersion 1 --username myDatabaseUser
-        ```
-        ```javascript
-        db = connect("localhost:27017/myDatabase")
-        ```
-        ```javascript
-        cluster = Mongo("mongodb://mymongo.example.net:27017/?replicaSet=myMongoCluster")
-        ```
-    *   Standard URI formats for various drivers:
-        ```bash
-        mongodb://myDatabaseUser:D1fficultP%40ssw0rd@mongodb0.example.com:27017,mongodb1.example.com:27017,mongodb2.example.com:27017/?authSource=admin&replicaSet=myRepl
-        ```
-        ```bash
-        mongodb+srv://myDatabaseUser:D1fficultP%40ssw0rd@cluster0.example.mongodb.net/?retryWrites=true&w=majority
-        ```
-*   **Key Concepts:**
-    *   **Documents:** Basic data structure (BSON).
-        ```javascript
-        {
-           field1: value1,
-           field2: value2,
-           ...
-        }
-        ```
-        Includes embedded documents with dot notation access.
-    *   **Collections:** Grouping documents.
-    *   **Databases:** Grouping collections.
-        ```javascript
-        use myDB
-        ```
-        ```javascript
-        myDB = cluster.getDB("myDB");
-        ```
-    *   **CRUD Operations:**
-        *   **Insert:** `insertOne()`, `insertMany()`, `insert()`.
-            ```javascript
-            db.inventory.insertOne(
-               { item: "canvas", qty: 100, tags: ["cotton"], size: { h: 28, w: 35.5, uom: "cm" } }
-            )
-            ```
-            ```javascript
-            db.inventory.insertMany([ /* ... */ ])
-            ```
-            `insert()` automatically adds `_id` if not specified.
-        *   **Read (Find):** `find()`.
-            ```javascript
-            db.inventory.find( {} ) // All documents
-            ```
-            ```javascript
-            db.inventory.find( { quantity: { $lt: 20 } } ) // With query operator
-            ```
-            ```javascript
-            db.bios.find( { contribs: "UNIX" } ) // Array querying
-            ```
-            Includes `$in`, `$all`, `$size` operators for arrays.
-        *   **Update:** `updateOne()`, `updateMany()`, `replaceOne()`, `findAndModify()`, `findOneAndUpdate()`, `findOneAndReplace()`, `bulkWrite()`.
-            ```javascript
-            db.products.updateOne(
-               { _id: 100 },
-               { $set: { "details.make": "Kustom Kidz" } } // Updating embedded field
-            )
-            ```
-            ```javascript
-            db.products.updateOne(
-               { _id: 100 },
-               { $set: { /* multiple fields */ } }
-            )
-            ```
-            ```javascript
-            db.products.updateOne(
-               { sku: "abc123" },
-               { $inc: { quantity: -2, "metrics.orders": 1 } } // $inc operator
-            )
-            ```
-            `updateMany` example with `$set` and `$currentDate`.
-            `bulkWrite` for multiple operations with write concern.
-        *   **Delete:** `deleteOne()`, `deleteMany()`.
-            ```javascript
-            db.collection.deleteOne( { status: "D" } )
-            ```
-    *   **Aggregation Framework:** `aggregate()`.
-        ```javascript
-        db.runCommand(
-           {
-             aggregate: "<collection>" || 1,
-             pipeline: [ <stage>, <...> ],
-             /* ... options ... */
-           }
-        )
-        ```
-        Includes stages like `$match`, `$group` (`$sum`), `$sort`, `$limit`, `$project`, `$unwind`, `$lookup`, `$setWindowFields`, `$search` (within `$lookup`).
-        ```javascript
-        { $sort : { count : -1 } } // Sorting
-        ```
-        ```javascript
-        { $unwind: <field path> } // Unwinding arrays
-        ```
-        ```javascript
-        { $project: { /* include/exclude fields */ } } // Projecting fields
-        ```
-        Comparison to SQL aggregation.
-    *   **Indexing:** `createIndex()`.
-        ```javascript
-        db.<collection>.createIndex( { <arrayField>: <sortOrder> } ) // Single field
-        ```
-        ```javascript
-        db.<collection>.createIndex( { <field1>: <sortOrder>, <field2>: <sortOrder>, ... } ) // Compound index
-        ```
-    *   **Transactions:** `startSession()`, `startTransaction()`, `commitTransaction()`, `abortTransaction()`.
-        ```javascript
-        session = db.getMongo().startSession( { readPreference: { mode: "primary" } } );
-        session.startTransaction( { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } } );
-        // ... operations ...
-        commitWithRetry(session); // Example retry logic
-        session.endSession();
-        ```
-        Includes `runTransactionWithRetry` function example.
-    *   **Explain:** `explain()`, `cursor.explain()`.
-        ```javascript
-        db.runCommand(
-           {
-             explain: <command>,
-             verbosity: <string>,
-             comment: <any>
-           }
-        )
-        ```
-    *   **Administration:** `listCollections()`, `shutdown()`.
-        ```javascript
-        db.adminCommand(
-           {
-              listCollections: 1,
-              nameOnly: true,
-              filter: { type: { $ne: "view" } }
-           }
-        )
-        ```
-        ```javascript
-        db.adminCommand( { shutdown: 1 } )
-        ```
-
 ## AbacusAI / ACI (AI Integration)
 
 *   **Context7 ID:** `/aipotheosis-labs/aci` (Most relevant result for "AbacusAI" research)
 *   **Description:** ACI.dev is the open source platform that connects your AI agents to 600+ tool integrations with multi-tenant auth, granular permissions, and access through direct function calling or a unified MCP server.
-*   **Installation:**
-    *   Clone repository:
-        ```bash
-        git clone https://github.com/aipotheosis-labs/aci.git
-        ```
-    *   Navigate to backend:
-        ```bash
-        cd aci/backend
-        ```
-    *   Install backend dependencies (`uv`):
-        ```bash
-        uv sync
-        ```
-        ```bash
-        source .venv/bin/activate
-        ```
-    *   Install backend dependencies (`pip`):
-        ```bash
-        $ pip install -r requirements.txt
-        ```
-    *   Activate virtual environment (Windows):
-        ```batchfile
-        % .venv\Scripts\activate.bat
-        ```
-    *   Activate virtual environment (MacOS/Linux):
-        ```bash
-        $ source .venv/bin/activate
-        ```
-    *   Copy environment file:
-        ```bash
-        cp .env.example .env
-        ```
-    *   Install backend pre-commit hooks:
-        ```bash
-        pre-commit install
-        ```
-    *   Install frontend dependencies (`npm`):
-        ```Bash
-        npm install --legacy-peer-deps
-        ```
-    *   Install frontend pre-commit hooks:
-        ```Bash
-        pre-commit install
-        ```
-*   **Local Development:**
-    *   Start backend services (Docker Compose):
-        ```bash
-        docker compose up --build
-        ```
-    *   Start frontend dev server:
-        ```Bash
-        npm run dev
-        ```
-    *   Configure frontend environment variables (`.env`):
-        ```Shell
-        NEXT_PUBLIC_API_URL=http://localhost:8000
-        NEXT_PUBLIC_DEV_PORTAL_URL=http://localhost:3000
-        NEXT_PUBLIC_ENVIRONMENT=local
-        NEXT_PUBLIC_AUTH_URL=https://8367878.propelauthtest.com
-        ```
-    *   Expose local server with ngrok:
-        ```bash
-        ngrok http http://localhost:8000
-        ```
-*   **Database Management (Backend):**
-    *   Apply migrations:
-        ```bash
-        docker compose exec runner alembic upgrade head
-        ```
-    *   Generate migration:
-        ```bash
-        docker compose exec runner alembic revision --autogenerate -m "description of changes"
-        ```
-    *   Check migrations:
-        ```bash
-        docker compose exec runner alembic check
-        ```
-    *   Revert migration:
-        ```bash
-        docker compose exec runner alembic downgrade -1
-        ```
-    *   Seed database:
-        ```bash
-        docker compose exec runner ./scripts/seed_db.sh
-        ```
-*   **Testing (Backend):**
-    *   Run tests:
-        ```bash
-        docker compose exec runner pytest
-        ```
-*   **Testing (Frontend):**
-    *   Run unit tests (watch mode):
-        ```Bash
-        npm run test
-        ```
-    *   Generate coverage report:
-        ```Bash
-        npm run test:coverage
-        ```
-*   **Code Quality:**
-    *   Run linters (frontend):
-        ```Bash
-        npm run lint
-        ```
-    *   Format code (frontend):
-        ```Bash
-        npm run format
-        ```
-    *   VS Code settings for Python with Ruff:
-        ```json
-        {
-            "[python]": {
-              "editor.formatOnSave": true,
-              "editor.defaultFormatter": "charliermarsh.ruff",
-              "editor.codeActionsOnSave": {
-                "source.organizeImports.ruff": "always"
-              }
-            }
-        }
-        ```
-*   **Admin CLI:**
-    *   Show help:
-        ```bash
-        docker compose exec runner python -m aci.cli --help
-        ```
-    *   Available commands: `create-agent`, `create-project`, `create-random-api-key`, `delete-app`, `fuzzy-test-function-execution`, `get-app`, `rename-app`, `update-agent`, `upsert-app`, `upsert-functions`.
-    *   Create random API key:
-        ```bash
-        docker compose exec runner python -m aci.cli create-random-api-key --visibility-access public
-        ```
-    *   Create app:
-        ```bash
-        docker compose exec runner python -m aci.cli create-app --app-file ./apps/brave_search/app.json --secrets-file ./apps/brave_search/.app.secrets.json
-        ```
-*   **Deployment (AWS CDK):**
-    *   Synthesize CloudFormation template:
-        ```Bash
-        $ cdk synth
-        ```
-*   **Frontend Directory Structure:**
-    ```
-    src
-    ├── app (Next.js App Router folder)
-    ├── components
-    │   ├── ...
-    │   └── ui
-    ├── hooks
-    │   └── use-mobile.tsx
-    └── lib
-    │   ├── api
-    │   ├── types
-    │   └── utils.ts
-    └── __test__
-        ├── apps
-        ├── linked-accounts
-        ├── project-setting
-        └── ...
-    ```
-*   **Production Environment Variables (Vercel Example):**
-    ```Shell
-    NEXT_PUBLIC_API_URL=https://api.aci.dev
-    NEXT_PUBLIC_DEV_PORTAL_URL=https://platform.aci.dev
-    NEXT_PUBLIC_ENVIRONMENT=production
-    NEXT_PUBLIC_AUTH_URL=<actual_production_propelauth_endpoint>
-    ```
 
-This research provides the foundational technical details, commands, and concepts necessary for implementing the unified agent system in Phase 4, strictly based on the information available through Context7.
+*   **Dependencies:**
+    *   No specific dependencies listed in the research.
+</file_content>
+
+Now that you have the latest state of the file, try the operation again with fewer, more precise SEARCH blocks. For large files especially, it may be prudent to try to limit yourself to <5 SEARCH/REPLACE blocks at a time, then wait for the user to respond with the result of the operation before following up with another replace_in_file call to make additional edits.
+(If you run into this error 3 times in a row, you may use the write_to_file tool as a fallback.)
+</error><environment_details>
+# VSCode Visible Files
+researchstack.md
+
+# VSCode Open Tabs
+design.md
+progress_log.md
+backend/src/deployment-verification.js
+backend/index.js
+backend/src/agent_client.js
+frontend/src/app/pinterest/callback/page.tsx
+researchstack.md
+
+# Current Time
+5/10/2025, 4:04:30 PM (America/New_York, UTC-4:00)
+
+# Context Window Usage
+180,920 / 1,048.576K tokens used (17%)
+
+# Current Mode
+PLAN MODE
+In this mode you should focus on information gathering, asking questions, and architecting a solution. Once you have a plan, use the plan_mode_respond tool to engage in a conversational back and forth with the user. Do not use the plan_mode_respond tool until you've gathered all the information you need e.g. with read_file or ask_followup_question.
+(Remember: If it seems the user wants you to use tools only available in Act Mode, you should ask the user to "toggle to Act mode" (use those words) - they will have to manually do this themselves with the Plan/Act toggle button below. You do not have the ability to switch to Act Mode yourself, and must wait for the user to do it themselves.)
+</environment_details>

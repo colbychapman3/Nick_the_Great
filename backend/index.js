@@ -507,9 +507,9 @@ app.get("/api/agent/experiments/:experimentId/metrics", authenticateToken, async
     }
 });
 
-app.get("/api/agent/status", authenticateToken, async (_, res) => {
+app.get("/api/agent/status", authenticateToken, async (req, res) => {
   try {
-    const agentStatus = await getAgentStatus();
+    const agentStatus = await getAgentStatus(req.user.id);
     res.json(agentStatus);
   } catch (error) {
     logger.error("Get Agent Status Error:", error);
