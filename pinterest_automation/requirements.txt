@@ -16,6 +16,7 @@ apscheduler>=3.9.1
 
 # Database (for storing pins and analytics)
 sqlalchemy>=1.4.40
+pymongo>=4.1.1
 
 # Image processing (optional, for image optimization)
 pillow>=9.2.0

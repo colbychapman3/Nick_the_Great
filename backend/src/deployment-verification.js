@@ -18,8 +18,14 @@
  * is acceptable for this internal script but should be handled carefully.
  */
 
-const fetch = require('node-fetch');
-global.fetch = require('node-fetch'); // Make fetch global
+let fetch;
+try {
+  fetch = require('node-fetch');
+  global.fetch = fetch; // Make fetch global
+} catch (error) {
+  console.error('Failed to load node-fetch. Make sure it is installed: npm install node-fetch');
+  process.exit(1);
+}
 const { promisify } = require('util');
 const { exec } = require('child_process');
 const execAsync = promisify(exec);
@@ -42,7 +48,8 @@ async function makeRequest(endpoint, options = {}) {
   console.log(`Making request to: ${url}`);
 
   try {
-    const response = await fetch(url, {
+    const nodeFetch = require('node-fetch');
+    const response = await nodeFetch(url, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers

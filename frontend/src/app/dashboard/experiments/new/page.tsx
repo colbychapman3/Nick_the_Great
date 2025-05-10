@@ -57,11 +57,15 @@ export default function NewExperimentPage() {
         throw new Error('Invalid parameters JSON');
       }
 
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+
       // Submit to API
       const response = await fetch('/api/agent/experiments', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify(formData)
       });

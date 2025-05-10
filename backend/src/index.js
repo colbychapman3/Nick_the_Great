@@ -32,11 +32,11 @@ app.use(cors({
     // Check if the origin is in our allowed list
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
-    } 
+    }
     // Check if it's a Vercel preview deployment URL
     else if (origin.match(/https:\/\/nick-the-great-.*-colby-chapmans-projects\.vercel\.app/)) {
       callback(null, true);
-    } 
+    }
     else {
       const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
       console.error(msg);
@@ -55,7 +55,7 @@ app.get('/health', (req, res) => {
     message: 'OK',
     timestamp: Date.now()
   };
-  
+
   try {
     res.status(200).json(healthCheck);
   } catch (error) {
@@ -225,6 +225,13 @@ app.use('/api/strategies', authenticateToken, ensureDbConnected, strategiesRoute
 
 const resourcesRouter = require('./routes/resources');
 app.use('/api/resources', authenticateToken, ensureDbConnected, resourcesRouter);
+
+// Pinterest routes
+const { router: pinterestRouter, setDb: setPinterestDb } = require('./routes/pinterest');
+app.use('/api/pinterest', authenticateToken, ensureDbConnected, (req, res, next) => {
+  setPinterestDb(db);
+  next();
+}, pinterestRouter);
 
 // ... (Apply authenticateToken and ensureDbConnected to other /api routes as needed)
 
