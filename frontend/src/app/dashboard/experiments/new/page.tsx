@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/auth/auth-context';
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 
 export default function NewExperimentPage() {

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/auth/auth-context';
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 
 // Helper function to format timestamps
 function formatTimestamp(timestamp: any): string {
   if (!timestamp) return 'N/A';
-  
+
   try {
     // Handle different timestamp formats
     let date;
@@ -20,7 +20,7 @@ function formatTimestamp(timestamp: any): string {
     } else {
       return 'Invalid date';
     }
-    
+
     return date.toLocaleString();
   } catch (e) {
     console.error('Error formatting timestamp:', e);
@@ -73,10 +73,10 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
 
     if (isAuthenticated && params.id) {
       fetchExperiment();
-      
+
       // Set up polling for updates every 5 seconds
       const intervalId = setInterval(fetchExperiment, 5000);
-      
+
       // Clean up interval on unmount
       return () => clearInterval(intervalId);
     }
@@ -89,11 +89,11 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
       const response = await fetch(`/api/agent/experiments/${params.id}/start`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to start experiment');
       }
-      
+
       // Refresh experiment data
       const updatedResponse = await fetch(`/api/agent/experiments/${params.id}`);
       if (updatedResponse.ok) {
@@ -115,11 +115,11 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
       const response = await fetch(`/api/agent/experiments/${params.id}/stop`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to stop experiment');
       }
-      
+
       // Refresh experiment data
       const updatedResponse = await fetch(`/api/agent/experiments/${params.id}`);
       if (updatedResponse.ok) {
@@ -188,7 +188,7 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Experiment Actions */}
                   <div className="border-t border-gray-200 px-4 py-4 sm:px-6">
                     <div className="flex space-x-3 justify-end">
@@ -202,7 +202,7 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
                           {actionInProgress ? 'Starting...' : 'Start Experiment'}
                         </button>
                       )}
-                      
+
                       {experiment.state === 'STATE_RUNNING' && (
                         <button
                           type="button"
@@ -215,7 +215,7 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Experiment Details */}
                   <div className="border-t border-gray-200">
                     <dl>
@@ -239,15 +239,15 @@ export default function ExperimentDetailsPage({ params }: { params: { id: string
                         <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
                         <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{formatTimestamp(experiment.last_update_time)}</dd>
                       </div>
-                      
+
                       {/* Show metrics if available */}
                       {experiment.metrics && (
                         <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                           <dt className="text-sm font-medium text-gray-500">Progress</dt>
                           <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                             <div className="w-full bg-gray-200 rounded-full h-2.5">
-                              <div 
-                                className="bg-blue-600 h-2.5 rounded-full" 
+                              <div
+                                className="bg-blue-600 h-2.5 rounded-full"
                                 style={{ width: `${experiment.metrics.progress_percent || 0}%` }}
                               ></div>
                             </div>
