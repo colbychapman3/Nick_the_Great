@@ -9,20 +9,13 @@ export function middleware(request: NextRequest) {
 
   // Special handling for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Pass through API requests to the backend in production
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nick-the-great.onrender.com';
-
-    if (process.env.NODE_ENV === 'production') {
-      // Don't rewrite for internal routes like revalidate
-      if (request.nextUrl.pathname.startsWith('/api/revalidate')) {
-        return NextResponse.next();
-      }
-
-      // Keep the /api prefix in the path when forwarding to the backend
-      const newUrl = `${apiUrl}${request.nextUrl.pathname}${request.nextUrl.search}`;
-
-      return NextResponse.rewrite(new URL(newUrl));
+    // Don't rewrite for internal routes like revalidate
+    if (request.nextUrl.pathname.startsWith('/api/revalidate')) {
+      return NextResponse.next();
     }
+
+    // Let Next.js rewrites handle API routes
+    return NextResponse.next();
   }
 
   // Allow normal page rendering to proceed
