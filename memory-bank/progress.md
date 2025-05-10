@@ -6,11 +6,11 @@
 |-----------|--------|---------|
 | Frontend | In Progress | Next.js app with auth, features, deployed to Vercel |
 | Backend | Implemented | Express/Node.js API with MongoDB, deployed to Render |
-| Authentication | Implemented | JWT-based auth fully functional across environments |
+| Authentication | Implemented | JWT-based auth fully functional across environments with proper token handling |
 | Business Logic | In Progress | Strategy and Resources APIs implemented |
 | Deployment | Completed | Successfully deployed to Vercel and Render with CORS fixed |
 | Mobile App | In Progress | React Native setup with environment variables |
-| **Unified Agent** | **Design Phase Complete** | Architecture defined in `design.md`, tech stack researched in `researchstack.md` |
+| **Unified Agent** | **Implementation Phase** | Architecture defined in `design.md`, tech stack researched in `researchstack.md`, core components implemented |
 
 ## Completed Work
 
@@ -127,6 +127,7 @@
 - 🏆 **Completed Phase 3: Analysis and Synthesis (May 7, 2025)**
 - 🏆 Refined Agent Core Service Interface (`proto/agent.proto`) (May 7, 2025)
 - 🏆 Created basic Agent Core Service project structure (May 7, 2025)
+- 🏆 Implemented JWT authentication in frontend API requests (May 8, 2025)
 
 ## Known Issues
 1. No form implementation yet for creating/editing strategies and resources
@@ -159,4 +160,5 @@
 
 ## Phase 4: Implementation and Testing
 
-*   **Status:** Not Started
+*   **Status:** In Progress
+*   **Details:** Implemented JWT authentication in frontend API requests, enhanced client library to include authentication tokens, updated experiment API endpoints to properly authenticate requests.
