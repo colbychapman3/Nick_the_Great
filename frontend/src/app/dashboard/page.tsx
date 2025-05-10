@@ -52,8 +52,17 @@ export default function DashboardPage() {
   const fetchAgentData = async () => {
     setLoadingStatus(true);
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      };
+
       // Fetch Agent Status
-      const statusResponse = await fetch('/api/agent/status');
+      const statusResponse = await fetch('/api/agent/status', {
+        headers
+      });
       if (!statusResponse.ok) {
         throw new Error(`HTTP error fetching agent status! status: ${statusResponse.status}`);
       }
@@ -62,7 +71,9 @@ export default function DashboardPage() {
 
       // Fetch list of experiments
       try {
-        const experimentsResponse = await fetch('/api/agent/experiments');
+        const experimentsResponse = await fetch('/api/agent/experiments', {
+          headers
+        });
         if (experimentsResponse.ok) {
           const experimentsData: ExperimentStatus[] = await experimentsResponse.json();
           setExperiments(experimentsData);
@@ -284,8 +295,13 @@ export default function DashboardPage() {
                                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                 onClick={async () => {
                                   try {
+                                    const token = localStorage.getItem('token');
                                     const response = await fetch(`/api/agent/experiments/${experiment.id.id}/start`, {
                                       method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': token ? `Bearer ${token}` : ''
+                                      }
                                     });
                                     if (response.ok) {
                                       // Refresh data after starting experiment
@@ -308,8 +324,13 @@ export default function DashboardPage() {
                                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                 onClick={async () => {
                                   try {
+                                    const token = localStorage.getItem('token');
                                     const response = await fetch(`/api/agent/experiments/${experiment.id.id}/stop`, {
                                       method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': token ? `Bearer ${token}` : ''
+                                      }
                                     });
                                     if (response.ok) {
                                       // Refresh data after stopping experiment

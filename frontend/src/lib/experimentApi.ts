@@ -51,10 +51,14 @@ export interface StatusResponse {
 export async function fetchExperiments(): Promise<ExperimentStatus[]> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
     });
@@ -79,10 +83,14 @@ export async function fetchExperiments(): Promise<ExperimentStatus[]> {
 export async function fetchExperimentDetails(id: string): Promise<ExperimentStatus> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
     });
@@ -107,10 +115,14 @@ export async function fetchExperimentDetails(id: string): Promise<ExperimentStat
 export async function createExperiment(definition: ExperimentDefinition): Promise<CreateExperimentResponse> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
       body: JSON.stringify({ definition }),
@@ -136,10 +148,14 @@ export async function createExperiment(definition: ExperimentDefinition): Promis
 export async function startExperiment(id: string): Promise<StatusResponse> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
     });
@@ -164,10 +180,14 @@ export async function startExperiment(id: string): Promise<StatusResponse> {
 export async function stopExperiment(id: string): Promise<StatusResponse> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/stop`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
     });
@@ -192,10 +212,14 @@ export async function stopExperiment(id: string): Promise<StatusResponse> {
 export async function fetchExperimentLogs(id: string): Promise<Array<{timestamp: string, level: string, message: string}>> {
   const client = ApiClient();
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/logs`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       credentials: 'include',
     });
