@@ -28,7 +28,19 @@ interface ExperimentStatus {
   estimated_completion_time?: { seconds: number, nanos: number };
 }
 
-interface AgentStatusResponse extends AgentStatus {
+interface AgentStatusData {
+  status: string;
+  uptime_seconds: number;
+  active_experiments: number;
+  completed_experiments: number;
+  failed_experiments: number;
+  metrics: any; // Use any for Struct
+  start_time?: { seconds: number, nanos: number }; // Timestamp structure
+  last_update_time?: { seconds: number, nanos: number };
+  estimated_completion_time?: { seconds: number, nanos: number };
+}
+
+interface AgentStatusResponse extends AgentStatusData {
     error?: string; // Add error for fetch failures
 }
 
