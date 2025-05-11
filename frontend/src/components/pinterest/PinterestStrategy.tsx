@@ -38,7 +38,7 @@ export default function PinterestStrategy() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated || !isPinterestAuthenticated) {
       setError('You must be authenticated with both Nick the Great and Pinterest to create a strategy');
       return;
@@ -69,9 +69,14 @@ export default function PinterestStrategy() {
       const data = await response.json();
       setSuccess('Pinterest strategy generation started successfully!');
       setStrategyId(data.strategyId);
-      
+
       // Start polling for strategy status
       pollStrategyStatus(data.strategyId);
+
+      // Redirect to strategy details page after a short delay
+      setTimeout(() => {
+        window.location.href = `/pinterest/strategies/${data.strategyId}`;
+      }, 2000);
     } catch (err: any) {
       console.error('Error creating Pinterest strategy:', err);
       setError(err.message || 'Failed to create Pinterest strategy');
@@ -114,24 +119,24 @@ export default function PinterestStrategy() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Pinterest Strategy Generator</h1>
-      
+
       <PinterestAuth onAuthStatusChange={handlePinterestAuthStatusChange} />
-      
+
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Create Pinterest Strategy</h2>
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <p>{error}</p>
           </div>
         )}
-        
+
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
             <p>{success}</p>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="niche" className="block text-sm font-medium text-gray-700 mb-1">
@@ -148,7 +153,7 @@ export default function PinterestStrategy() {
               placeholder="e.g., Sustainable Fashion, Organic Gardening, Digital Marketing"
             />
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="targetAudience" className="block text-sm font-medium text-gray-700 mb-1">
               Target Audience
@@ -164,7 +169,7 @@ export default function PinterestStrategy() {
               placeholder="e.g., Millennial women, Small business owners, Health-conscious parents"
             />
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="businessGoal" className="block text-sm font-medium text-gray-700 mb-1">
               Business Goal
@@ -180,7 +185,7 @@ export default function PinterestStrategy() {
               placeholder="e.g., Increase website traffic, Generate leads, Build brand awareness"
             />
           </div>
-          
+
           <div className="mb-6">
             <label htmlFor="numPins" className="block text-sm font-medium text-gray-700 mb-1">
               Number of Pin Ideas
@@ -199,7 +204,7 @@ export default function PinterestStrategy() {
               <option value={20}>20 pins</option>
             </select>
           </div>
-          
+
           <button
             type="submit"
             disabled={loading || !isPinterestAuthenticated}
@@ -214,7 +219,7 @@ export default function PinterestStrategy() {
               'Generate Pinterest Strategy'
             )}
           </button>
-          
+
           {!isPinterestAuthenticated && (
             <p className="text-sm text-red-500 mt-2">
               You must connect your Pinterest account before generating a strategy.
@@ -222,40 +227,40 @@ export default function PinterestStrategy() {
           )}
         </form>
       </div>
-      
+
       {strategy && (
         <div className="bg-white shadow-md rounded-lg p-6 mt-6">
           <h2 className="text-xl font-semibold mb-4">Strategy Status</h2>
-          
+
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-700">Status:</p>
             <p className={`text-sm ${
-              strategy.status === 'completed' ? 'text-green-600' : 
-              strategy.status === 'failed' ? 'text-red-600' : 
+              strategy.status === 'completed' ? 'text-green-600' :
+              strategy.status === 'failed' ? 'text-red-600' :
               'text-yellow-600'
             }`}>
-              {strategy.status === 'completed' ? 'Completed' : 
-               strategy.status === 'failed' ? 'Failed' : 
+              {strategy.status === 'completed' ? 'Completed' :
+               strategy.status === 'failed' ? 'Failed' :
                strategy.status === 'processing' ? 'Processing' : 'Pending'}
             </p>
           </div>
-          
+
           {strategy.status === 'completed' && strategy.result && (
             <div className="mt-4">
               <h3 className="text-lg font-medium mb-2">Pinterest Strategy</h3>
-              
+
               {/* Display the strategy details */}
               {strategy.result.pinterestStrategy && (
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h4 className="font-medium mb-2">Strategy Overview</h4>
                   <p className="text-sm mb-4">{strategy.result.pinterestStrategy.overview}</p>
-                  
+
                   <h4 className="font-medium mb-2">Target Audience</h4>
                   <p className="text-sm mb-4">{strategy.result.pinterestStrategy.target_audience_analysis}</p>
-                  
+
                   <h4 className="font-medium mb-2">Content Strategy</h4>
                   <p className="text-sm mb-4">{strategy.result.pinterestStrategy.content_strategy}</p>
-                  
+
                   <h4 className="font-medium mb-2">Board Structure</h4>
                   <ul className="list-disc pl-5 mb-4">
                     {Object.entries(strategy.result.pinterestStrategy.board_structure).map(([board, description]: [string, any]) => (
@@ -266,7 +271,7 @@ export default function PinterestStrategy() {
                   </ul>
                 </div>
               )}
-              
+
               {/* Display pin ideas */}
               {strategy.result.pinIdeas && strategy.result.pinIdeas.length > 0 && (
                 <div className="mt-4">
@@ -289,7 +294,7 @@ export default function PinterestStrategy() {
               )}
             </div>
           )}
-          
+
           {strategy.status === 'failed' && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
               <p className="text-sm text-red-700">
@@ -297,7 +302,7 @@ export default function PinterestStrategy() {
               </p>
             </div>
           )}
-          
+
           {(strategy.status === 'pending' || strategy.status === 'processing') && (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
