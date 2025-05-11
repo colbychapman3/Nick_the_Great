@@ -4,7 +4,8 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs"); // Ensure this is installed and in package.json
 // const { Configuration, OpenAIApi } = require("openai"); // Removed OpenAI
-const { connectToDatabase, getClient } = require("./db"); // Use the corrected db.js
+// Use mock database for testing
+const { connectToDatabase, getClient } = require("./mock-db");
 
 // Load environment variables
 dotenv.config();
@@ -226,9 +227,9 @@ app.use('/api/strategies', authenticateToken, ensureDbConnected, strategiesRoute
 const resourcesRouter = require('./routes/resources');
 app.use('/api/resources', authenticateToken, ensureDbConnected, resourcesRouter);
 
-// Pinterest routes
-const { router: pinterestRouter, setDb: setPinterestDb } = require('./routes/pinterest');
-app.use('/api/pinterest', authenticateToken, ensureDbConnected, (req, res, next) => {
+// Pinterest routes - using mock implementation for testing
+const { router: pinterestRouter, setDb: setPinterestDb } = require('./routes/mock-pinterest');
+app.use('/api/pinterest', authenticateToken, (req, res, next) => {
   setPinterestDb(db);
   next();
 }, pinterestRouter);
