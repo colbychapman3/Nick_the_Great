@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import AgentStatus from '@/components/AgentStatus';
 
 // Define interfaces based on agent.proto messages (simplified for frontend)
 interface ExperimentId {
@@ -27,14 +28,6 @@ interface ExperimentStatus {
   estimated_completion_time?: { seconds: number, nanos: number };
 }
 
-interface AgentStatus {
-  agent_state: string;
-  active_experiments: number;
-  cpu_usage_percent: number;
-  memory_usage_mb: number;
-  last_updated?: { seconds: number, nanos: number }; // Timestamp structure
-}
-
 interface AgentStatusResponse extends AgentStatus {
     error?: string; // Add error for fetch failures
 }
@@ -42,7 +35,6 @@ interface AgentStatusResponse extends AgentStatus {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null);
   const [experiments, setExperiments] = useState<ExperimentStatus[]>([]); // State for list of experiments
   const [loadingStatus, setLoadingStatus] = useState(true);
 
@@ -56,51 +48,6 @@ export default function DashboardPage() {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
       };
-
-      // Fetch Agent Status with retry logic
-      let statusData: AgentStatus | null = null;
-      let statusError: Error | null = null;
-
-      try {
-        console.log('Fetching agent status...');
-        const statusResponse = await fetch('/api/agent/status', {
-          headers,
-          // Add cache control to prevent caching
-          cache: 'no-store',
-        });
-
-        if (!statusResponse.ok) {
-          console.warn(`Agent status response not OK: ${statusResponse.status}`);
-          // Don't throw immediately, try to parse the response
-          const errorData = await statusResponse.json().catch(() => ({}));
-          if (errorData._mock) {
-            // This is our mock endpoint response, use it
-            console.log('Using mock agent status data');
-            statusData = errorData;
-          } else {
-            throw new Error(`HTTP error fetching agent status! status: ${statusResponse.status}`);
-          }
-        } else {
-          statusData = await statusResponse.json();
-          console.log('Successfully fetched agent status');
-        }
-      } catch (error: any) {
-        console.error("Error fetching agent status:", error);
-        statusError = error;
-      }
-
-      // Update state based on status fetch results
-      if (statusData) {
-        setAgentStatus(statusData);
-      } else if (statusError) {
-        setAgentStatus({
-          error: statusError.message || "Could not fetch agent data",
-          agent_state: 'UNKNOWN',
-          active_experiments: 0,
-          cpu_usage_percent: 0,
-          memory_usage_mb: 0
-        });
-      }
 
       // Fetch list of experiments
       try {
@@ -126,13 +73,6 @@ export default function DashboardPage() {
 
     } catch (error: any) {
       console.error("Could not fetch agent data:", error);
-      setAgentStatus({
-        error: error.message || "Could not fetch agent data",
-        agent_state: 'UNKNOWN',
-        active_experiments: 0,
-        cpu_usage_percent: 0,
-        memory_usage_mb: 0
-      });
     } finally {
       setLoadingStatus(false);
     }
@@ -227,48 +167,7 @@ export default function DashboardPage() {
           <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div className="px-4 py-8 sm:px-0">
               {/* Agent Status Section */}
-              <div className="bg-white shadow overflow-hidden rounded-lg mb-4">
-                <div className="px-4 py-5 sm:px-6">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Agent Core Service Status</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    {loadingStatus ? 'Loading agent status...' : (agentStatus?.error ? 'Error fetching status.' : 'Current status of the Agent Core service.')}
-                  </p>
-                </div>
-                {agentStatus ? (
-                  agentStatus.error ? (
-                    <div className="px-4 py-5 sm:px-6">
-                      <p className="text-sm text-red-500">Error: {agentStatus.error}</p>
-                    </div>
-                  ) : (
-                    <div className="border-t border-gray-200">
-                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <div className="text-sm font-medium text-gray-500">Agent State</div>
-                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.agent_state || 'N/A'}</div>
-                      </div>
-                      <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <div className="text-sm font-medium text-gray-500">Active Experiments</div>
-                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.active_experiments ?? 'N/A'}</div>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <div className="text-sm font-medium text-gray-500">CPU Usage</div>
-                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.cpu_usage_percent?.toFixed(2) ?? 'N/A'}%</div>
-                      </div>
-                      <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <div className="text-sm font-medium text-gray-500">Memory Usage</div>
-                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{agentStatus.memory_usage_mb?.toFixed(2) ?? 'N/A'} MB</div>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <div className="text-sm font-medium text-gray-500">Last Updated</div>
-                        <div className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{formatTimestamp(agentStatus.last_updated)}</div>
-                      </div>
-                    </div>
-                  )
-                ) : (
-                  <div className="px-4 py-5 sm:px-6">
-                    <p className="text-sm text-gray-500">Loading agent status...</p>
-                  </div>
-                )}
-              </div>
+              <AgentStatus />
 
               {/* Experiments List Section */}
                <div className="bg-white shadow overflow-hidden rounded-lg">
@@ -408,7 +307,6 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-
 
               {/* Development Mode Section - Can be removed or repurposed later */}
               {/*

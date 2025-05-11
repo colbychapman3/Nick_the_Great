@@ -116,15 +116,17 @@ function getExperimentStatus(experimentId) {
 
 // Function to get the overall agent status
 function getAgentStatus(userId) {
-    return new Promise((resolve, reject) => {
-        // Create a default agent status object
-        const agentStatus = {
-            status: "running",
-            userId: userId,
-            message: "Agent is running and associated with the user."
-        };
-        resolve(agentStatus);
+  return new Promise((resolve, reject) => {
+    getClient().GetAgentStatus({}, (err, response) => {
+      if (err) {
+        logging.error(`Error getting agent status: ${err}`);
+        reject(err);
+      } else {
+        logging.info(`Agent status: ${JSON.stringify(response)}`);
+        resolve(response);
+      }
     });
+  });
 }
 
 // Function to list all experiments (this is a backend-only function since there's no gRPC endpoint for it)

@@ -289,25 +289,28 @@ app.get("/api/agent/experiments/:experimentId", authenticateToken, async (req, r
             return res.status(403).json({ message: "You don't have permission to view this experiment" });
         }
 
-        // Get status from Agent Core to ensure we have the latest data
-        try {
-            const agentCoreStatus = await getExperimentStatus(experimentId);
+        // Get status from Agent Core
+        const agentCoreStatus = await getExperimentStatus(experimentId);
 
-            // If Agent Core has updated status, update our database
-            if (agentCoreStatus && agentCoreStatus.id && agentCoreStatus.id.id === experimentId) {
-                await experimentService.updateExperiment(agentCoreStatus);
+        // If Agent Core has updated status, update our database
+        if (agentCoreStatus && agentCoreStatus.id && agentCoreStatus.id.id === experimentId) {
+            // Update experiment in database
+            await experimentService.updateExperiment(agentCoreStatus);
 
-                // Get fresh experiment data from database
-                const updatedExperiment = await experimentService.getExperimentById(experimentId);
-                return res.json(updatedExperiment);
-            }
-        } catch (error) {
-            // If we can't get status from Agent Core, just return the database version
-            logger.warn(`Could not get experiment status from Agent Core: ${error.message}`);
+            // Get fresh experiment data from database
+            const updatedExperiment = await experimentService.getExperimentById(experimentId);
+
+            // Return the updated experiment with additional database fields
+            res.json({
+                ...agentCoreStatus,
+                createdAt: updatedExperiment.createdAt,
+                updatedAt: updatedExperiment.updatedAt,
+                results: updatedExperiment.results
+            });
+        } else {
+            // If Agent Core doesn't have the experiment, return database version
+            res.json(experiment.toGrpcFormat());
         }
-
-        // Return the experiment from database
-        res.json(experiment);
     } catch (error) {
         logger.error("Get Experiment Error:", error);
         res.status(500).json({ message: "Error fetching experiment", error: error.message });
@@ -417,7 +420,7 @@ app.post("/api/agent/experiments/:experimentId/stop", authenticateToken, async (
         }
 
         // Stop experiment in Agent Core
-        const response = await stopExperiment(experimentId);
+        const response = await stopAgent(experimentId);
 
         if (response.success) {
             // Get updated status from Agent Core
@@ -507,15 +510,29 @@ app.get("/api/agent/experiments/:experimentId/metrics", authenticateToken, async
     }
 });
 
-app.get("/api/agent/status", authenticateToken, async (req, res) => {
+const { getServerSession } = require("next-auth/next");
+const { authOptions } = require("./auth");
+
+const getAgentStatusRoute = async (req, res) => {
   try {
-    const agentStatus = await getAgentStatus(req.user.id);
-    res.json(agentStatus);
+    const session = await getServerSession(req, res, authOptions);
+    if (session) {
+      const agentStatus = {
+        status: "running",
+        userId: "mockUserId",
+        message: "Agent is running and associated with the user.",
+      };
+      res.json(agentStatus);
+    } else {
+      res.status(401).json({ message: "Unauthorized" });
+    }
   } catch (error) {
     logger.error("Get Agent Status Error:", error);
     res.status(500).json({ message: "Error fetching agent status", error: error.message });
   }
-});
+};
+
+app.get("/api/agent/status", getAgentStatusRoute);
 
 // Endpoint to get experiment logs
 app.get("/api/agent/experiments/:experimentId/logs", authenticateToken, async (req, res) => {
@@ -566,7 +583,6 @@ app.post("/api/agent/decisions/:decisionId/approve", authenticateToken, async (r
 
         const response = await approveDecision(decisionId, userId, approved, comment);
         res.json(response);
-
     } catch (error) {
         console.error("Approve Decision Error:", error);
         res.status(500).json({ message: "Error processing decision approval", error: error.message });
