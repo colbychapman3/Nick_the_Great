@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 // Define the metrics interface to include all possible metric types
 interface ExperimentMetrics {
   progress_percent: number;

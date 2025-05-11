@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 /**
  * This is a fallback API route that provides mock experiment details
  * when the backend API is not available. This helps prevent 404 errors

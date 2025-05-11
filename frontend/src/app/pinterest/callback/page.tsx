@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Suspense } from 'react';
+import React, { useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 // Loading component to show while the page is loading
 function LoadingState() {
@@ -22,9 +22,6 @@ function LoadingState() {
     </div>
   );
 }
-
-// The client component that uses useSearchParams() hook
-import { useSearchParams } from 'next/navigation';
 
 function CallbackHandlerClient() {
   const searchParams = useSearchParams();
