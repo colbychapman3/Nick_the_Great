@@ -79,105 +79,102 @@ describe('Experiment API Endpoints', () => {
     // Create an in-memory MongoDB server
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
-    
+
     // Connect to the in-memory database
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    
+    await mongoose.connect(mongoUri);
+
     // Get the database instance
     db = mongoose.connection.db;
-    
+
     // Create a test user
     testUser = await createTestUser(db);
-    
+
     // Generate an auth token
     authToken = generateToken(testUser);
-    
+
     // Create the Express app
     app = express();
-    
+
     // Apply middleware
     app.use(express.json());
-    
+
     // Mock the authenticateToken middleware
     app.use((req, res, next) => {
       req.user = { id: testUser._id.toString(), username: testUser.username };
       next();
     });
-    
+
     // Import the routes
     const indexRoutes = require('../../index');
-    
+
     // Start the server
     server = app.listen(3001);
   });
-  
+
   afterAll(async () => {
     // Close the server
     await server.close();
-    
+
     // Close the MongoDB connection and stop the server
     await mongoose.connection.close();
     await mongoServer.stop();
   });
-  
+
   beforeEach(async () => {
     // Clear all collections before each test
     const collections = mongoose.connection.collections;
-    
+
     for (const key in collections) {
       const collection = collections[key];
       await collection.deleteMany({});
     }
-    
+
     // Reset all mocks
     jest.clearAllMocks();
   });
-  
+
   describe('GET /api/agent/experiments', () => {
     it('should return a list of experiments', async () => {
       // Arrange
       const userId = testUser._id.toString();
-      
+
       // Create some test experiments
       await createTestExperiment(db, userId, { _id: 'test-exp-1', name: 'Test Experiment 1' });
       await createTestExperiment(db, userId, { _id: 'test-exp-2', name: 'Test Experiment 2' });
-      
+
       // Act
       const response = await request(app)
         .get('/api/agent/experiments')
         .set('Authorization', `Bearer ${authToken}`);
-      
+
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.experiments).toHaveLength(2);
       expect(response.body.pagination).toBeDefined();
       expect(response.body.pagination.total).toBe(2);
     });
-    
+
     it('should filter experiments by type', async () => {
       // Arrange
       const userId = testUser._id.toString();
-      
+
       // Create some test experiments with different types
-      await createTestExperiment(db, userId, { 
-        _id: 'test-exp-1', 
+      await createTestExperiment(db, userId, {
+        _id: 'test-exp-1',
         name: 'Test Experiment 1',
         type: 'AI_DRIVEN_EBOOKS'
       });
-      await createTestExperiment(db, userId, { 
-        _id: 'test-exp-2', 
+      await createTestExperiment(db, userId, {
+        _id: 'test-exp-2',
         name: 'Test Experiment 2',
         type: 'PINTEREST_STRATEGY'
       });
-      
+
       // Act
       const response = await request(app)
         .get('/api/agent/experiments?type=AI_DRIVEN_EBOOKS')
         .set('Authorization', `Bearer ${authToken}`);
-      
+
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.experiments).toHaveLength(1);

@@ -28,10 +28,7 @@ async function connectToDatabase() {
         // Create a new MongoClient if not already created
         if (!client) {
             logging.info('Creating new MongoDB client');
-            client = new MongoClient(uri, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-            });
+            client = new MongoClient(uri);
         }
 
         // Connect to the MongoDB server if not already connected

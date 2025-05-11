@@ -28,38 +28,35 @@ jest.mock('../../src/utils/logger', () => ({
 describe('Experiment Service', () => {
   let db;
   let mongoServer;
-  
+
   beforeAll(async () => {
     // Create an in-memory MongoDB server
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
-    
+
     // Connect to the in-memory database
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    
+    await mongoose.connect(mongoUri);
+
     // Get the database instance
     db = mongoose.connection.db;
   });
-  
+
   afterAll(async () => {
     // Close the MongoDB connection and stop the server
     await mongoose.connection.close();
     await mongoServer.stop();
   });
-  
+
   beforeEach(async () => {
     // Clear all collections before each test
     const collections = mongoose.connection.collections;
-    
+
     for (const key in collections) {
       const collection = collections[key];
       await collection.deleteMany({});
     }
   });
-  
+
   describe('createExperiment', () => {
     it('should create a new experiment in the database', async () => {
       // Arrange
@@ -86,10 +83,10 @@ describe('Experiment Service', () => {
           }
         }
       };
-      
+
       // Act
       const result = await experimentService.createExperiment(experimentData, userId);
-      
+
       // Assert
       expect(result).toBeDefined();
       expect(result._id).toBe(experimentId);
@@ -97,13 +94,13 @@ describe('Experiment Service', () => {
       expect(result.name).toBe(experimentData.name);
       expect(result.type).toBe(experimentData.type);
       expect(result.state).toBe(experimentData.state);
-      
+
       // Verify it was saved to the database
       const savedExperiment = await Experiment.findById(experimentId);
       expect(savedExperiment).toBeDefined();
       expect(savedExperiment.name).toBe(experimentData.name);
     });
-    
+
     it('should create metrics snapshot if metrics exist', async () => {
       // Arrange
       const userId = 'test-user-id';
@@ -125,10 +122,10 @@ describe('Experiment Service', () => {
         last_update_time: { seconds: Math.floor(Date.now() / 1000) },
         estimated_completion_time: { seconds: Math.floor(Date.now() / 1000) + 300 }
       };
-      
+
       // Act
       await experimentService.createExperiment(experimentData, userId);
-      
+
       // Assert
       const metricsSnapshots = await ExperimentMetrics.find({ experimentId });
       expect(metricsSnapshots).toHaveLength(1);
@@ -136,16 +133,16 @@ describe('Experiment Service', () => {
       expect(metricsSnapshots[0].elapsedTimeSeconds).toBe(300);
     });
   });
-  
+
   describe('updateExperiment', () => {
     it('should update an existing experiment in the database', async () => {
       // Arrange
       const userId = 'test-user-id';
       const experimentId = uuidv4();
-      
+
       // Create an experiment first
       await createTestExperiment(db, userId, { _id: experimentId, name: 'Original Name' });
-      
+
       const updatedData = {
         id: { id: experimentId },
         name: 'Updated Name',
@@ -161,22 +158,22 @@ describe('Experiment Service', () => {
         last_update_time: { seconds: Math.floor(Date.now() / 1000) },
         estimated_completion_time: { seconds: Math.floor(Date.now() / 1000) + 450 }
       };
-      
+
       // Act
       const result = await experimentService.updateExperiment(updatedData);
-      
+
       // Assert
       expect(result).toBeDefined();
       expect(result.name).toBe('Updated Name');
       expect(result.state).toBe('STATE_RUNNING');
-      
+
       // Verify it was updated in the database
       const updatedExperiment = await Experiment.findById(experimentId);
       expect(updatedExperiment).toBeDefined();
       expect(updatedExperiment.name).toBe('Updated Name');
       expect(updatedExperiment.state).toBe('STATE_RUNNING');
     });
-    
+
     it('should throw an error if experiment does not exist', async () => {
       // Arrange
       const nonExistentId = uuidv4();
@@ -186,7 +183,7 @@ describe('Experiment Service', () => {
         type: 'AI_DRIVEN_EBOOKS',
         state: 'STATE_RUNNING'
       };
-      
+
       // Act & Assert
       await expect(experimentService.updateExperiment(updatedData))
         .rejects.toThrow(`Experiment with ID ${nonExistentId} not found`);
