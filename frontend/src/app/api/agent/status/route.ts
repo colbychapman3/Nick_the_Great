@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Add export config to mark this route as dynamic
+// Mark this route as dynamic to avoid static rendering
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 /**
  * This is a fallback API route that provides a mock agent status
  * when the backend API is not available. This helps prevent 404 errors
  * in the frontend when the backend is not running.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get the API URL from environment variables
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -17,17 +18,12 @@ export async function GET(request: NextRequest) {
     try {
       console.log(`Attempting to fetch agent status from backend: ${apiUrl}/api/agent/status`);
 
-      // Get authorization header from request
-      const authHeader = request.headers.get('Authorization');
-
       const response = await fetch(`${apiUrl}/api/agent/status`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Forward the authorization header if present
-          ...(authHeader ? { 'Authorization': authHeader } : {})
         },
-        cache: 'no-store',
+        next: { revalidate: 0 },
       });
 
       // If the backend API responds successfully, return its response

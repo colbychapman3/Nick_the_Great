@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { Suspense } from 'react';
 
 // Loading component to show while the page is loading
 function LoadingState() {
@@ -23,17 +23,15 @@ function LoadingState() {
   );
 }
 
-// Callback handler component
-interface CallbackHandlerProps {
-  searchParams: URLSearchParams;
-}
+// The client component that uses useSearchParams() hook
+import { useSearchParams } from 'next/navigation';
 
-function CallbackHandler({ searchParams }: CallbackHandlerProps) {
+function CallbackHandlerClient() {
+  const searchParams = useSearchParams();
+  const code = searchParams?.get('code') ?? null;
+  const state = searchParams?.get('state') ?? null;
+
   useEffect(() => {
-    // Get the code and state from the URL
-    const code = searchParams?.get('code');
-    const state = searchParams?.get('state');
-
     if (code && state) {
       // Send a message to the opener window with the code and state
       if (window.opener) {
@@ -50,18 +48,16 @@ function CallbackHandler({ searchParams }: CallbackHandlerProps) {
         window.location.href = '/pinterest';
       }
     }
-  }, [searchParams]);
+  }, [code, state]);
 
   return <LoadingState />;
 }
 
-// Main page component with suspense boundary
+// Main page component that wraps the client component in suspense
 export default function PinterestCallbackPage() {
-  const searchParams = useSearchParams();
-
   return (
     <Suspense fallback={<LoadingState />}>
-      <CallbackHandler searchParams={searchParams} />
+      <CallbackHandlerClient />
     </Suspense>
   );
 }
