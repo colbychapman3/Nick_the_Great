@@ -95,11 +95,9 @@ async function setupMongooseConnection() {
 
     // Connect to MongoDB using mongoose
     await mongoose.connect(uri, {
-      dbName: "nick_agent",
-      // These options are no longer needed in newer mongoose versions
-      // but kept for compatibility with older versions
-      useNewUrlParser: true,
-      useUnifiedTopology: true
+      dbName: "nick_agent"
+      // Removed deprecated options:
+      // useNewUrlParser and useUnifiedTopology are no longer needed in MongoDB Driver 4.0.0+
     });
 
     logger.info("Mongoose connected successfully");
