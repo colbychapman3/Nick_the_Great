@@ -227,8 +227,8 @@ app.use('/api/strategies', authenticateToken, ensureDbConnected, strategiesRoute
 const resourcesRouter = require('./routes/resources');
 app.use('/api/resources', authenticateToken, ensureDbConnected, resourcesRouter);
 
-// Pinterest routes - using mock implementation for testing
-const { router: pinterestRouter, setDb: setPinterestDb } = require('./routes/mock-pinterest');
+// Pinterest routes - using real implementation
+const { router: pinterestRouter, setDb: setPinterestDb } = require('./routes/pinterest');
 app.use('/api/pinterest', authenticateToken, (req, res, next) => {
   setPinterestDb(db);
   next();

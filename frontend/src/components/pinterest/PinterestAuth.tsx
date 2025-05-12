@@ -61,58 +61,21 @@ export default function PinterestAuth({ onAuthStatusChange }: PinterestAuthProps
 
       const token = localStorage.getItem('token');
 
-      try {
-        // Try to fetch from the backend API
-        const response = await fetch('/api/pinterest/auth-url', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-
-          // Open the authorization URL in a new window
-          window.open(data.authUrl, 'pinterest-auth', 'width=800,height=600');
-          return;
+      // Fetch from the backend API
+      const response = await fetch('/api/pinterest/auth-url', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      } catch (fetchError) {
-        console.log('Backend API fetch failed, using mock implementation:', fetchError);
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get Pinterest authorization URL');
       }
 
-      // Mock implementation for when backend is not available (e.g., Vercel deployment)
-      const appId = process.env.NEXT_PUBLIC_PINTEREST_APP_ID || '1518892';
-      const redirectUri = process.env.NEXT_PUBLIC_PINTEREST_REDIRECT_URI ||
-                         `${window.location.origin}/pinterest/callback`;
+      const data = await response.json();
 
-      // Generate a mock state parameter
-      const state = btoa(JSON.stringify({
-        userId: 'mock-user',
-        timestamp: Date.now()
-      }));
-
-      // For demo/development purposes, we'll just set a cookie directly
-      // In production, this should go through the proper OAuth flow
-      const mockAuthData = {
-        authenticated: true,
-        tokenStatus: 'valid',
-        authenticatedAt: new Date().toISOString()
-      };
-
-      // Store in a cookie for the mock API implementation
-      document.cookie = `pinterest_auth=${JSON.stringify(mockAuthData)}; path=/; max-age=86400`;
-
-      // Notify parent component
-      if (onAuthStatusChange) {
-        onAuthStatusChange(true);
-      }
-
-      // Update local state
-      setPinterestStatus(mockAuthData);
-
-      // Show success message
-      setError(null);
-      alert('Mock Pinterest authentication successful! This is a simulated connection for demo purposes.');
+      // Open the authorization URL in a new window
+      window.open(data.authUrl, 'pinterest-auth', 'width=800,height=600');
 
     } catch (err: any) {
       console.error('Error initiating Pinterest auth:', err);

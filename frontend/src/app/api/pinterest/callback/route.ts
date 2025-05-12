@@ -12,49 +12,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-    try {
-      // Try to forward request to backend
-      const response = await fetch(`${apiUrl}/api/pinterest/callback`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token.accessToken || token.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return NextResponse.json(data);
-      }
-    } catch (fetchError) {
-      console.log('Backend API fetch failed, using mock implementation:', fetchError);
-    }
-
-    // Mock implementation for when backend is not available (e.g., Vercel deployment)
+    // Validate required parameters
     const { code, state } = body;
-
     if (!code || !state) {
       return NextResponse.json({ message: 'Missing code or state parameter' }, { status: 400 });
     }
 
-    // For demo purposes, we'll just set a cookie with mock authentication data
-    const mockAuthData = {
-      authenticated: true,
-      tokenStatus: 'valid',
-      authenticatedAt: new Date().toISOString()
-    };
-
-    // Set a cookie with the mock auth data
-    const cookieStore = cookies();
-    cookieStore.set('pinterest_auth', JSON.stringify(mockAuthData), {
-      path: '/',
-      maxAge: 86400, // 1 day
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+    // Forward request to backend
+    const response = await fetch(`${apiUrl}/api/pinterest/callback`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token.accessToken || token.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
 
-    return NextResponse.json({ success: true });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to complete Pinterest authentication');
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error in Pinterest callback API route:', error);
     return NextResponse.json(
