@@ -246,17 +246,76 @@ class ApprovalWorkflow:
     Workflow for managing approval requests in the agent.
     """
     
-    def __init__(self, notification_system: NotificationSystem):
+    def __init__(self, 
+                 notification_system: NotificationSystem, 
+                 db_client: Optional[Any] = None, 
+                 autonomy_framework_callback: Optional[Callable[[str, ApprovalStatus, Dict[str, Any]], None]] = None):
         """
         Initialize the approval workflow.
         
         Args:
             notification_system: The notification system to use for sending approval requests
+            db_client: The database client for persistence.
+            autonomy_framework_callback: Callback function from AutonomyFramework to handle approval results.
         """
         self.notification_system = notification_system
-        self.approval_requests = {}  # Dictionary of request ID to ApprovalRequest
+        self.db_client = db_client
+        self.autonomy_framework_callback = autonomy_framework_callback
+        self.approval_requests: Dict[str, ApprovalRequest] = {}  # Dictionary of request ID to ApprovalRequest
+        
+        if self.db_client:
+            self._restore_pending_approvals()
+            
         logger.info("Approval Workflow initialized")
-    
+
+    def _restore_pending_approvals(self):
+        """
+        Restore pending approval requests from the database.
+        """
+        if not self.db_client:
+            return
+
+        logger.info("Attempting to restore pending approval requests from database...")
+        try:
+            # TODO: Implement self.db_client.restore_pending_approval_requests() in db_client.py
+            # This method should fetch all approval requests that are still in a 'pending' state.
+            # It will require corresponding backend RPCs and database logic.
+            # Example expected return: List[Dict[str, Any]]
+            restored_requests_data = self.db_client.restore_pending_approval_requests() 
+            
+            if restored_requests_data:
+                for req_data in restored_requests_data:
+                    try:
+                        request = ApprovalRequest.from_dict(req_data)
+                        # TODO: Crucial step - Re-assign the callback.
+                        # The AutonomyFramework needs to provide its _handle_approval_result method
+                        # to the ApprovalWorkflow, which then assigns it here.
+                        if self.autonomy_framework_callback:
+                            request.callback = self.autonomy_framework_callback
+                        else:
+                            logger.warning(f"No autonomy_framework_callback available for restored request {request.id}. Callback will be missing.")
+                        
+                        # Only restore if it's genuinely pending and not expired (or handle expiration)
+                        if request.status == ApprovalStatus.PENDING and not request.is_expired():
+                            self.approval_requests[request.id] = request
+                            logger.info(f"Restored pending approval request {request.id}")
+                        elif request.status == ApprovalStatus.PENDING and request.is_expired():
+                            request.mark_as_expired() # Mark as expired locally
+                            # And update in DB
+                            # TODO: Implement self.db_client.update_approval_request_status() in db_client.py
+                            self.db_client.update_approval_request_status(request.id, request.status.value, request.to_dict())
+                            logger.info(f"Restored and marked request {request.id} as EXPIRED.")
+
+                    except Exception as e:
+                        logger.error(f"Error reconstructing approval request from data '{req_data}': {e}")
+                logger.info(f"Successfully processed {len(restored_requests_data)} restored approval requests.")
+            else:
+                logger.info("No pending approval requests found in database to restore.")
+        except AttributeError:
+             logger.warning("db_client does not have 'restore_pending_approval_requests' method. Skipping restore.")
+        except Exception as e:
+            logger.error(f"Error restoring pending approval requests from database: {e}")
+            
     def create_approval_request(self, 
                                title: str,
                                description: str,
@@ -316,6 +375,19 @@ class ApprovalWorkflow:
         
         # Link the notification to the approval request
         request.notification_id = notification.id
+
+        # Persist the approval request if db_client is available
+        if self.db_client:
+            try:
+                # TODO: Implement self.db_client.sync_approval_request(request_data) in db_client.py
+                # This method should save the new approval request to the database.
+                # It will require corresponding backend RPCs and database logic.
+                self.db_client.sync_approval_request(request.to_dict())
+                logger.info(f"Approval request {request.id} synced with database.")
+            except AttributeError:
+                logger.warning(f"db_client does not have 'sync_approval_request' method. Request {request.id} not synced.")
+            except Exception as e:
+                logger.error(f"Error syncing approval request {request.id} to database: {e}")
         
         logger.info(f"Created approval request {request.id}: {title}")
         return request
@@ -385,9 +457,21 @@ class ApprovalWorkflow:
         if request.notification_id:
             notification = self.notification_system.get_notification(request.notification_id)
             if notification:
-                notification.take_action("approve")
+                notification.take_action("approve") # This might trigger its own DB sync if NotificationSystem is updated
         
-        return request.approve(user_id, reason)
+        approved = request.approve(user_id, reason)
+        if approved and self.db_client:
+            try:
+                # TODO: Implement self.db_client.update_approval_request_status(request_id, status, request_data) in db_client.py
+                # This method should update the status of an existing approval request in the database.
+                # It will require corresponding backend RPCs and database logic.
+                self.db_client.update_approval_request_status(request.id, request.status.value, request.to_dict())
+                logger.info(f"Approval request {request.id} status ({request.status.value}) synced with database.")
+            except AttributeError:
+                logger.warning(f"db_client does not have 'update_approval_request_status' method. Status for {request.id} not synced.")
+            except Exception as e:
+                logger.error(f"Error syncing approval request {request.id} status to database: {e}")
+        return approved
     
     def reject_request(self, request_id: str, user_id: str, reason: Optional[str] = None) -> bool:
         """
@@ -410,6 +494,16 @@ class ApprovalWorkflow:
         if request.notification_id:
             notification = self.notification_system.get_notification(request.notification_id)
             if notification:
-                notification.take_action("reject")
+                notification.take_action("reject") # This might trigger its own DB sync
         
-        return request.reject(user_id, reason)
+        rejected = request.reject(user_id, reason)
+        if rejected and self.db_client:
+            try:
+                # TODO: Implement self.db_client.update_approval_request_status(request_id, status, request_data) in db_client.py
+                self.db_client.update_approval_request_status(request.id, request.status.value, request.to_dict())
+                logger.info(f"Approval request {request.id} status ({request.status.value}) synced with database.")
+            except AttributeError:
+                logger.warning(f"db_client does not have 'update_approval_request_status' method. Status for {request.id} not synced.")
+            except Exception as e:
+                logger.error(f"Error syncing approval request {request.id} status to database: {e}")
+        return rejected

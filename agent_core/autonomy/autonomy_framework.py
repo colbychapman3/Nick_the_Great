@@ -16,6 +16,17 @@ from .approval_workflow import ApprovalWorkflow, ApprovalStatus
 from .risk_tolerance import RiskToleranceProfile, RiskAssessment, RiskCategory, RiskLevel, create_default_profiles
 from .experimentation_framework import ExperimentationFramework, Experiment, ExperimentType, ExperimentStatus
 
+# Import db_client for persistence
+try:
+    from agent_core.db_client import db_client
+except ImportError:
+    try:
+        from ..db_client import db_client # If autonomy is a sub-package
+    except ImportError:
+        logger.warning("db_client could not be imported for AutonomyFramework. Persistence features will be disabled.")
+        db_client = None
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -29,11 +40,23 @@ class AutonomyFramework:
     for determining when the agent can act autonomously.
     """
 
-    def __init__(self):
-        """Initialize the autonomy framework."""
+    def __init__(self, external_db_client: Optional[Any] = None):
+        """
+        Initialize the autonomy framework.
+        
+        Args:
+            external_db_client: An optional database client instance. If None, will try to use the global db_client.
+        """
+        self.db_client = external_db_client if external_db_client else db_client
+        
         self.decision_matrix = DecisionMatrix()
-        self.notification_system = NotificationSystem()
-        self.approval_workflow = ApprovalWorkflow(self.notification_system)
+        # Pass db_client to NotificationSystem and ApprovalWorkflow
+        self.notification_system = NotificationSystem(db_client=self.db_client)
+        self.approval_workflow = ApprovalWorkflow(
+            notification_system=self.notification_system,
+            db_client=self.db_client,
+            autonomy_framework_callback=self._handle_approval_result # Pass the callback method
+        )
         self.pending_actions = {}  # Dictionary of action ID to pending action info
 
         # Initialize risk tolerance framework

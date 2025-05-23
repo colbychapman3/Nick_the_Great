@@ -172,3 +172,48 @@ graph TD
     *   Write an integration test for the `/api/agent/status` flow (Frontend -> Backend -> Agent Core).
 
 This detailed plan provides the initial steps for Phase 4, focusing on setting up the core communication and integrating one task module. Subsequent steps will involve implementing the remaining agent logic, task modules, and UI features.
+
+## 5. Operational Flows
+
+This section outlines key operational flows for specific agent capabilities, demonstrating how different components of the system interact.
+
+### Operational Flow: Pinterest Strategy Generation and Execution
+
+This section outlines the proposed end-to-end flow for generating a Pinterest marketing strategy and then executing it on the Pinterest platform, orchestrated by the Agent Core. This involves two distinct phases and potentially two types of tasks/experiments.
+
+**Phase 1: Strategy Generation**
+
+1.  **Initiation:** An experiment or task of type `PINTEREST_STRATEGY` (as defined in `proto/agent.proto`) is created via the frontend or an internal trigger. Parameters include `niche`, `target_audience`, `business_goal`, etc.
+2.  **Task Execution (Agent Core):** Agent Core dispatches this to the `task_modules/pinterest_strategy_task.py`.
+3.  **Content Generation:** `PinterestStrategyTask` uses an external AI service (e.g., AbacusAI) to generate a detailed Pinterest strategy, including board ideas, pin ideas, content themes, and descriptions.
+4.  **Result Storage:** `PinterestStrategyTask` returns this generated strategy as a structured result (e.g., JSON). Agent Core, upon receiving this result, persists it.
+    *   **Option A (Current Implied by `run_pinterest_strategy.py`):** The result is saved to a dedicated `strategies` collection in MongoDB, possibly with a unique `strategy_id`.
+    *   **Option B (Alternative):** The result is stored within the `results` field of the `PINTEREST_STRATEGY` experiment document in the `experiments` collection.
+    *   *Recommendation: Storing in the experiment's results field might be simpler initially, but a dedicated `strategies` collection could be better for managing and querying strategies independently of their originating experiment.*
+
+**Phase 2: Strategy Execution on Pinterest**
+
+1.  **Initiation:** After a strategy is generated and approved (either automatically by the agent or by a human collaborator), Agent Core initiates a new task/experiment, for example, of type `EXECUTE_PINTEREST_STRATEGY`.
+2.  **New Task Module (`execute_pinterest_strategy_task.py` - To Be Developed):**
+    *   **Parameters:** This task would take parameters such as `strategy_id` (referencing the generated strategy in MongoDB) or the full strategy content itself. It would also need access to Pinterest account credentials/tokens (see Security Considerations).
+    *   **Functionality:**
+        *   Retrieves the detailed strategy content from MongoDB (if `strategy_id` is passed). This might require a new method in `agent_core/db_client.py` and a corresponding gRPC endpoint on the backend's `DatabaseSyncService` to fetch specific strategy documents.
+        *   Instantiates `PinterestClient` from the `pinterest_automation/src/api/client.py` module.
+        *   Parses the strategy content (boards to create, pins to create with their details like images, text, links).
+        *   Iteratively calls `PinterestClient` methods (e.g., `create_board()`, `create_pin()`) to implement the strategy on Pinterest.
+        *   It should handle potential image requirements (e.g., if pins need images, how are these sourced or generated based on the strategy?).
+        *   Reports progress, successes, and failures back to Agent Core.
+3.  **Result Storage:** The results of the execution (e.g., number of pins/boards created, links to them, any errors) are returned to Agent Core and persisted.
+
+**Security and Configuration Considerations:**
+
+*   **Pinterest Authentication:** The `EXECUTE_PINTEREST_STRATEGY` task module will need secure access to Pinterest API tokens. This should integrate with the planned secrets management solution. The initial OAuth flow for `pinterest_automation` needs to be handled as a one-time setup.
+*   **Error Handling and Rollback:** The execution task should have robust error handling. True rollback for posted content is difficult, so careful review of generated strategies before execution is important.
+
+**Alternative Execution Models (Considered but less aligned with current Task Module architecture):**
+
+*   **Agent Core Direct Orchestration:** Agent Core directly calling `PinterestClient` methods. Less modular.
+*   **`pinterest_automation/main.py` as a Scheduled Service:** Decoupled, but makes direct Agent Core control and feedback harder.
+
+**Recommendation:**
+The development of a new `execute_pinterest_strategy_task.py` module (as described in Phase 2) is the recommended approach as it aligns best with the existing task-based architecture of Agent Core, promotes modularity, and allows for clear separation of concerns between strategy generation and execution.

@@ -24,6 +24,16 @@ class ExperimentService {
         name: experimentData.name,
         type: experimentData.type,
         description: experimentData.definition?.description || '',
+        // NOTE ON PARAMETER SOURCE (for experiment definition parameters):
+        // The 'experimentData' object, which is a gRPC ExperimentStatus message
+        // from Agent Core, contains the original ExperimentDefinition (including
+        // its 'parameters' Struct) as an embedded 'definition' field.
+        // This service directly accesses 'experimentData.definition.parameters'
+        // to populate the Mongoose 'Experiment' model's 'parameters' field.
+        //
+        // Agent Core does NOT flatten definition parameters into the 'metrics' field
+        // of the ExperimentStatus message for persistence. The 'metrics' field is
+        // reserved for dynamic operational metrics.
         parameters: experimentData.definition?.parameters || {},
         state: experimentData.state,
         statusMessage: experimentData.status_message,

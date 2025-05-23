@@ -107,13 +107,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# In-memory storage for experiment statuses
-# This will be initialized from the database on startup
-experiment_statuses = {}
-
-# In-memory storage for running task futures (for cancellation)
-running_tasks = {}
-
 # Thread pool for executing tasks
 task_executor = futures.ThreadPoolExecutor(max_workers=5) # Use a small pool for tasks
 
@@ -147,51 +140,6 @@ def get_system_metrics():
         logger.error(f"Error getting system metrics: {e}")
         return 0.0, 0.0
 
-# Function to restore experiments from database
-def restore_experiments_from_db():
-    """Restore experiment data from the database on startup"""
-    if not db_sync_enabled:
-        logger.info("Database sync is disabled, skipping experiment restoration")
-        return
-
-    try:
-        logger.info("Attempting to restore experiments from database...")
-
-        # Try to restore experiments from the database
-        restored_experiments = db_client.restore_experiments()
-
-        if not restored_experiments:
-            logger.warning("No experiments restored from database")
-            return
-
-        # Add restored experiments to in-memory storage
-        for experiment in restored_experiments:
-            experiment_id = experiment.id.id
-            experiment_statuses[experiment_id] = experiment
-            logger.info(f"Restored experiment {experiment_id} from database")
-
-        logger.info(f"Successfully restored {len(restored_experiments)} experiments from database")
-    except Exception as e:
-        logger.error(f"Error restoring experiments from database: {e}")
-
-# Function to sync experiment status to database
-def sync_experiment_to_db(experiment_id):
-    """Sync experiment status to the database"""
-    if not db_sync_enabled:
-        return
-
-    try:
-        # Get experiment status
-        status = experiment_statuses.get(experiment_id)
-        if not status:
-            logger.warning(f"Cannot sync experiment {experiment_id} to database: Status not found")
-            return
-
-        # Sync to database
-        db_client.sync_experiment_status(status)
-    except Exception as e:
-        logger.error(f"Error syncing experiment {experiment_id} to database: {e}")
-
 # Function to sync log entry to database
 def sync_log_to_db(log_entry):
     """Sync log entry to the database"""
@@ -204,16 +152,74 @@ def sync_log_to_db(log_entry):
     except Exception as e:
         logger.error(f"Error syncing log entry to database: {e}")
 
-# Restore experiments on startup
-restore_experiments_from_db()
-
 # Define the AgentServiceServicer
 class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
+    def __init__(self):
+        logger.info("Initializing AgentServiceServicer...")
+        self.experiment_statuses = {}
+        self.running_tasks = {}
+        # Call the method to load initial state from DB
+        self._restore_experiments_from_db()
+        logger.info("AgentServiceServicer initialized.")
+
+    def _restore_experiments_from_db(self):
+        """Restore experiment data from the database on startup (now a method)."""
+        if not db_sync_enabled:
+            logger.info("Database sync is disabled, skipping experiment restoration")
+            return
+
+        try:
+            logger.info("Attempting to restore experiments from database...")
+            restored_experiments = db_client.restore_experiments() # db_client is module level
+
+            if not restored_experiments:
+                logger.warning("No experiments restored from database")
+                return
+
+            for experiment in restored_experiments:
+                experiment_id = experiment.id.id
+                self.experiment_statuses[experiment_id] = experiment # Use self.experiment_statuses
+                logger.info(f"Restored experiment {experiment_id} from database")
+
+            logger.info(f"Successfully restored {len(restored_experiments)} experiments from database")
+        except Exception as e:
+            logger.error(f"Error restoring experiments from database: {e}")
+
+    # NOTE ON PARAMETER PERSISTENCE:
+    # When an ExperimentStatus message is synced to the backend:
+    # 1. The original ExperimentDefinition (including its 'parameters' Struct)
+    #    is directly included as the 'definition' field within the
+    #    ExperimentStatus message. (See CreateExperiment method).
+    # 2. This entire ExperimentStatus message, along with its embedded
+    #    'definition' field, is sent to the backend for persistence via
+    #    db_client.sync_experiment_status(status).
+    # 3. The backend service then extracts the parameters from this
+    #    'definition.parameters' field to store them in the database.
+    #
+    # Definition parameters are NOT typically flattened or duplicated into the
+    # 'metrics' field of the ExperimentStatus message from Agent Core for general persistence.
+    # The 'metrics' field is generally reserved for dynamic operational metrics.
+    # Task-specific results might be added to metrics in _handle_task_completion,
+    # but these are distinct from the initial definition parameters.
+    def _sync_experiment_to_db(self, experiment_id):
+        """Sync experiment status to the database (now a method)."""
+        if not db_sync_enabled:
+            return
+
+        try:
+            status = self.experiment_statuses.get(experiment_id) # Use self.experiment_statuses
+            if not status:
+                logger.warning(f"Cannot sync experiment {experiment_id} to database: Status not found")
+                return
+            db_client.sync_experiment_status(status) # db_client is still global/module level
+        except Exception as e:
+            logger.error(f"Error syncing experiment {experiment_id} to database: {e}")
+            
     def CreateExperiment(self, request, context):
         logger.info(f"Received CreateExperiment request: {request}")
 
         # Check if the experiment type is valid using the autonomy framework
-        experiment_type = request.definition.type
+        experiment_type = request.definition.type # This will now be an AgentTaskType enum value
         experiment_name = request.definition.name
 
         # Generate a unique ID for the experiment
@@ -240,12 +246,12 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         )
 
         # Store in memory
-        experiment_statuses[experiment_id] = experiment_status
+        self.experiment_statuses[experiment_id] = experiment_status # Use self
 
         logger.info(f"Created experiment with ID: {experiment_id}, type: {experiment_type}, name: {experiment_name}")
 
         # Sync to database
-        sync_experiment_to_db(experiment_id)
+        self._sync_experiment_to_db(experiment_id) # Call as method
 
         return agent_pb2.CreateExperimentResponse(
             id=agent_pb2.ExperimentId(id=experiment_id),
@@ -256,11 +262,11 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Received StartExperiment request: {request}")
         experiment_id = request.id.id
 
-        if experiment_id not in experiment_statuses:
+        if experiment_id not in self.experiment_statuses: # Use self
             logger.warning(f"Attempted to start non-existent experiment: {experiment_id}")
             return agent_pb2.StatusResponse(success=False, message=f"Experiment with ID {experiment_id} not found")
 
-        status = experiment_statuses[experiment_id]
+        status = self.experiment_statuses[experiment_id] # Use self
 
         # Check if experiment is already running
         if status.state == agent_pb2.ExperimentState.STATE_RUNNING:
@@ -308,31 +314,32 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Starting experiment: {experiment_id}")
 
         # Sync status change to database
-        sync_experiment_to_db(experiment_id)
+        self._sync_experiment_to_db(experiment_id) # Call as method
 
         # Submit task execution to the thread pool
         task_type = status.type
         task_parameters = status.definition.parameters
 
         task_instance = None
-        if task_type == agent_pb2.ExperimentType.AI_DRIVEN_EBOOKS:
+        # Assuming agent_pb2.AgentTaskType will have the same enum value names
+        if task_type == agent_pb2.AgentTaskType.AI_DRIVEN_EBOOKS:
             task_instance = EbookGeneratorTask()
             status.status_message = "Ebook generation task submitted to executor"
             logger.info(f"Ebook generation task submitted for experiment {experiment_id}")
-        elif task_type == agent_pb2.ExperimentType.FREELANCE_WRITING:
+        elif task_type == agent_pb2.AgentTaskType.FREELANCE_WRITING:
             task_instance = FreelanceWritingTask()
             status.status_message = "Freelance writing task submitted to executor"
             logger.info(f"Freelance writing task submitted for experiment {experiment_id}")
-        elif task_type == agent_pb2.ExperimentType.NICHE_AFFILIATE_WEBSITE:
+        elif task_type == agent_pb2.AgentTaskType.NICHE_AFFILIATE_WEBSITE:
             task_instance = NicheAffiliateWebsiteTask()
             status.status_message = "Niche affiliate website task submitted to executor"
             logger.info(f"Niche affiliate website task submitted for experiment {experiment_id}")
-        elif task_type == agent_pb2.ExperimentType.PINTEREST_STRATEGY:
+        elif task_type == agent_pb2.AgentTaskType.PINTEREST_STRATEGY:
             task_instance = PinterestStrategyTask()
             status.status_message = "Pinterest strategy task submitted to executor"
             logger.info(f"Pinterest strategy task submitted for experiment {experiment_id}")
         else:
-            status.status_message = f"Unknown experiment type: {task_type}. Cannot start task."
+            status.status_message = f"Unknown task type: {task_type}. Cannot start task." # Updated "experiment type" to "task type"
             status.state = agent_pb2.ExperimentState.STATE_FAILED
             logger.error(status.status_message)
             # No task submitted, update status immediately
@@ -346,7 +353,7 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
             future.add_done_callback(lambda f: self._handle_task_completion(experiment_id, f))
 
             # Store the future for potential cancellation
-            running_tasks[experiment_id] = future
+            self.running_tasks[experiment_id] = future # Use self
 
             # Start a background thread to update metrics periodically
             threading.Thread(
@@ -365,8 +372,8 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Starting metrics update thread for experiment {experiment_id}")
 
         # Update metrics every 5 seconds while the experiment is running
-        while experiment_id in experiment_statuses:
-            status = experiment_statuses[experiment_id]
+        while experiment_id in self.experiment_statuses: # Use self
+            status = self.experiment_statuses[experiment_id] # Use self
 
             # Only update metrics if the experiment is still running
             if status.state != agent_pb2.ExperimentState.STATE_RUNNING:
@@ -410,7 +417,7 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
                 status.last_update_time.seconds = current_time
 
                 # Sync metrics update to database
-                sync_experiment_to_db(experiment_id)
+                self._sync_experiment_to_db(experiment_id) # Call as method
 
             except Exception as e:
                 logger.error(f"Error updating metrics for experiment {experiment_id}: {e}")
@@ -428,10 +435,10 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Task completed for experiment {experiment_id}")
 
         # Remove from running tasks
-        if experiment_id in running_tasks:
-            del running_tasks[experiment_id]
+        if experiment_id in self.running_tasks: # Use self
+            del self.running_tasks[experiment_id] # Use self
 
-        status = experiment_statuses.get(experiment_id)
+        status = self.experiment_statuses.get(experiment_id) # Use self
         if not status:
             logger.error(f"Experiment status not found for completed task: {experiment_id}")
             return
@@ -491,7 +498,7 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
             logger.info(f"Experiment {experiment_id} status updated to {status.state}")
 
             # Sync status change to database
-            sync_experiment_to_db(experiment_id)
+            self._sync_experiment_to_db(experiment_id) # Call as method
 
     def _flatten_result_for_metrics(self, result):
         """
@@ -517,11 +524,11 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Received StopExperiment request: {request}")
         experiment_id = request.id.id
 
-        if experiment_id not in experiment_statuses:
+        if experiment_id not in self.experiment_statuses: # Use self
             logger.warning(f"Attempted to stop non-existent experiment: {experiment_id}")
             return agent_pb2.StatusResponse(success=False, message=f"Experiment with ID {experiment_id} not found")
 
-        status = experiment_statuses[experiment_id]
+        status = self.experiment_statuses[experiment_id] # Use self
         if status.state in [agent_pb2.ExperimentState.STATE_COMPLETED, agent_pb2.ExperimentState.STATE_FAILED, agent_pb2.ExperimentState.STATE_STOPPED]:
             logger.warning(f"Attempted to stop experiment that is not running: {experiment_id}")
             return agent_pb2.StatusResponse(success=False, message=f"Experiment with ID {experiment_id} is not running")
@@ -533,8 +540,8 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Stopping experiment: {experiment_id}")
 
         # Cancel the running task if it exists
-        if experiment_id in running_tasks:
-            future = running_tasks[experiment_id]
+        if experiment_id in self.running_tasks: # Use self
+            future = self.running_tasks[experiment_id] # Use self
             if not future.done():
                 logger.info(f"Cancelling task for experiment {experiment_id}")
                 cancelled = future.cancel()
@@ -546,12 +553,12 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
                 logger.info(f"Task for experiment {experiment_id} already completed, no need to cancel")
 
             # Remove from running tasks
-            del running_tasks[experiment_id]
+            del self.running_tasks[experiment_id] # Use self
         else:
             logger.warning(f"No running task found for experiment {experiment_id}")
 
         # Sync status change to database
-        sync_experiment_to_db(experiment_id)
+        self._sync_experiment_to_db(experiment_id) # Call as method
 
         return agent_pb2.StatusResponse(success=True, message=f"Experiment {experiment_id} stopped")
 
@@ -559,25 +566,25 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         logger.info(f"Received GetExperimentStatus request: {request}")
         experiment_id = request.id.id
 
-        if experiment_id not in experiment_statuses:
+        if experiment_id not in self.experiment_statuses: # Use self
             logger.warning(f"Attempted to get status for non-existent experiment: {experiment_id}")
             # Return a default or error status
             return agent_pb2.ExperimentStatus(
                 id=request.id,
                 name="Not Found",
-                type=agent_pb2.ExperimentType.TYPE_UNSPECIFIED,
+                type=agent_pb2.AgentTaskType.TASK_TYPE_UNSPECIFIED, # Updated to AgentTaskType and new unspecified name
                 state=agent_pb2.ExperimentState.STATE_UNSPECIFIED,
                 status_message=f"Experiment with ID {experiment_id} not found"
             )
 
         # Return the current status
-        return experiment_statuses[experiment_id]
+        return self.experiment_statuses[experiment_id] # Use self
 
     def GetAgentStatus(self, request, context):
         logger.info(f"Received GetAgentStatus request: {request}")
 
         # Calculate active experiments
-        active_count = sum(1 for status in experiment_statuses.values() if status.state == agent_pb2.ExperimentState.STATE_RUNNING)
+        active_count = sum(1 for status in self.experiment_statuses.values() if status.state == agent_pb2.ExperimentState.STATE_RUNNING) # Use self
 
         # Get pending approval count
         pending_approvals = autonomy_framework.get_approval_workflow().get_pending_count()
@@ -631,8 +638,8 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
         yield sample_log
 
         # If we have an experiment ID, yield some experiment-specific logs
-        if experiment_id and experiment_id in experiment_statuses:
-            status = experiment_statuses[experiment_id]
+        if experiment_id and experiment_id in self.experiment_statuses: # Use self
+            status = self.experiment_statuses[experiment_id] # Use self
 
             # Create a log entry with the experiment status
             status_log = agent_pb2.LogEntry(
@@ -701,10 +708,10 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
 
         # Stop all running experiments
         experiments_stopped = 0
-        for experiment_id in list(running_tasks.keys()):  # Use list to avoid modification during iteration
+        for experiment_id in list(self.running_tasks.keys()):  # Use self
             try:
                 # Cancel the task
-                future = running_tasks[experiment_id]
+                future = self.running_tasks[experiment_id] # Use self
                 if not future.done():
                     cancelled = future.cancel()
                     if cancelled:
@@ -713,8 +720,8 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
                         logger.warning(f"Failed to cancel task for experiment {experiment_id}")
 
                 # Update experiment status
-                if experiment_id in experiment_statuses:
-                    status = experiment_statuses[experiment_id]
+                if experiment_id in self.experiment_statuses: # Use self
+                    status = self.experiment_statuses[experiment_id] # Use self
                     if status.state == agent_pb2.ExperimentState.STATE_RUNNING:
                         status.state = agent_pb2.ExperimentState.STATE_STOPPED
                         status.status_message = "Experiment stopped by agent kill switch"
@@ -722,16 +729,16 @@ class AgentServiceServicer(agent_pb2_grpc.AgentServiceServicer):
                         experiments_stopped += 1
 
                 # Remove from running tasks
-                del running_tasks[experiment_id]
+                del self.running_tasks[experiment_id] # Use self
 
             except Exception as e:
                 logger.error(f"Error stopping experiment {experiment_id}: {e}")
 
         # Sync all experiment statuses to database before shutdown
         if db_sync_enabled:
-            for experiment_id in experiment_statuses:
+            for experiment_id in self.experiment_statuses: # Use self
                 try:
-                    sync_experiment_to_db(experiment_id)
+                    self._sync_experiment_to_db(experiment_id) # Call as method
                 except Exception as e:
                     logger.error(f"Error syncing experiment {experiment_id} to database during shutdown: {e}")
 

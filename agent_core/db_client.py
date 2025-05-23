@@ -46,8 +46,24 @@ class BackendDBClient:
     def connect(self):
         """Connect to the Backend API"""
         try:
-            # Create insecure channel (TODO: Use TLS for production)
-            self.channel = grpc.insecure_channel(self.backend_address)
+            # TODO: Ensure 'server_root_ca.pem' is available in a known location.
+            # This file is necessary for the client to verify the server's SSL certificate.
+            # It should be provisioned securely to the agent's environment.
+            # For now, we assume it's in the 'agent_core' directory alongside db_client.py or a configured path.
+            # A more robust solution might involve a configuration setting for the cert path.
+            cert_path = os.path.join(os.path.dirname(__file__), 'server_root_ca.pem') # Assumes cert is in the same dir
+
+            try:
+                with open(cert_path, 'rb') as f:
+                    root_certs = f.read()
+            except FileNotFoundError:
+                logger.error(f"Server root CA certificate ({cert_path}) not found. Cannot create secure gRPC channel.")
+                self.connected = False
+                return False
+            
+            credentials = grpc.ssl_channel_credentials(root_certificates=root_certs)
+            self.channel = grpc.secure_channel(self.backend_address, credentials)
+            logger.info(f"Attempting to establish secure gRPC connection to {self.backend_address}")
 
             # Create database sync stub
             self.db_sync_stub = database_sync_pb2_grpc.DatabaseSyncServiceStub(self.channel)
@@ -55,10 +71,23 @@ class BackendDBClient:
             # Set connected flag
             self.connected = True
 
-            logger.info(f"Connected to Backend gRPC service at {self.backend_address}")
+            # Test connection (optional, but good for immediate feedback)
+            # You might need a simple health check RPC method on the server
+            # For now, we assume connection is successful if channel is created.
+            logger.info(f"Secure gRPC channel created. Connected to Backend gRPC service at {self.backend_address}")
             return True
-        except Exception as e:
-            logger.error(f"Failed to connect to Backend gRPC service: {e}")
+        except grpc.RpcError as rpc_error: # More specific gRPC error
+            logger.error(f"Failed to connect to Backend gRPC service via secure channel: {rpc_error}")
+            # Example: check for specific statuses like UNAVAILABLE if server is down or cert issue
+            if hasattr(rpc_error, 'code') and rpc_error.code() == grpc.StatusCode.UNAVAILABLE:
+                 logger.error("Service unavailable. Ensure the backend gRPC server is running and accessible, and SSL/TLS settings match.")
+            elif hasattr(rpc_error, 'code') and rpc_error.code() == grpc.StatusCode.INTERNAL and "ssl" in str(rpc_error.details()).lower():
+                 logger.error("SSL handshake failed. Check server_root_ca.pem and server certificates.")
+
+            self.connected = False
+            return False
+        except Exception as e: # Catch other potential errors during channel creation
+            logger.error(f"An unexpected error occurred while creating secure gRPC channel: {e}")
             self.connected = False
             return False
 

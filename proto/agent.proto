@@ -20,14 +20,14 @@ enum ExperimentState {
   STATE_STOPPED = 6;     // Experiment was manually stopped
 }
 
-// Defines the types of experiments the agent can run
-enum ExperimentType {
-  TYPE_UNSPECIFIED = 0;
+// Defines the types of tasks the agent can run (formerly ExperimentType)
+enum AgentTaskType {
+  TASK_TYPE_UNSPECIFIED = 0; // Renamed from TYPE_UNSPECIFIED for clarity
   FREELANCE_WRITING = 1;
   NICHE_AFFILIATE_WEBSITE = 2;
   AI_DRIVEN_EBOOKS = 3;
   PINTEREST_STRATEGY = 4;
-  // Add other experiment types as needed
+  // Add other task types as needed
 }
 
 // Defines log levels for streaming logs
@@ -46,10 +46,10 @@ enum LogLevel {
 
 // Represents the definition of an experiment
 message ExperimentDefinition {
-  ExperimentType type = 1;                // Type of the experiment
+  AgentTaskType type = 1;                // Type of the task/experiment
   string name = 2;                        // User-defined name for the experiment
   string description = 3;                 // Brief description
-  google.protobuf.Struct parameters = 4;  // Flexible parameters specific to the experiment type (e.g., topic, audience for ebook; niche for website)
+  google.protobuf.Struct parameters = 4;  // Flexible parameters specific to the task/experiment type (e.g., topic, audience for ebook; niche for website)
   // Add other common definition fields if needed (e.g., budget, duration)
 }
 
@@ -83,7 +83,7 @@ message AgentStatus {
 message ExperimentStatus {
   ExperimentId id = 1;
   string name = 2;
-  ExperimentType type = 3;
+  AgentTaskType type = 3; // Updated to use AgentTaskType
   ExperimentState state = 4;
   string status_message = 5; // e.g., "Generating chapter 3", "Awaiting budget approval"
   google.protobuf.Struct metrics = 6; // Key performance indicators (e.g., revenue, clicks, progress %)

@@ -1,3 +1,13 @@
+**Important Note on Implementation and Source of Truth:**
+
+This document provides a human-readable overview and conceptual model for the agent's autonomous decision matrix. The actual, executable rules that the agent uses are defined in Python code within the `_create_default_matrix()` method in the file `agent_core/autonomy/decision_matrix.py`.
+
+**Synchronization:** While this document aims to accurately reflect the implemented rules, the Python code in `agent_core/autonomy/decision_matrix.py` should be considered the definitive source of truth. If discrepancies are found, the Python code dictates the agent's behavior.
+
+**Manual Updates Required:** Any changes to the decision rules in the Python code (especially to the structure or logic of conditions) **must be manually reflected in this Markdown document** to maintain accuracy. Future work may include a script to help automate this synchronization. Please ensure this document is kept up-to-date with the implemented logic.
+
+---
+
 # Autonomous Decision Matrix for Investment Strategy Execution
 
 This decision matrix establishes clear thresholds and parameters for autonomous action in implementing the investment strategies, defining when the AI agent can act independently versus when human approval is required.

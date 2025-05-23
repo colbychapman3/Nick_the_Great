@@ -229,7 +229,7 @@ module.exports = {
     approveDecision,
     stopAgent,
     // Expose proto enums and types if needed in backend routes
-    ExperimentType: nickthegreat_proto.ExperimentType,
+    AgentTaskType: nickthegreat_proto.AgentTaskType, // Renamed from ExperimentType
     ExperimentState: nickthegreat_proto.ExperimentState,
     LogLevel: nickthegreat_proto.LogLevel,
     ExperimentDefinition: nickthegreat_proto.ExperimentDefinition,

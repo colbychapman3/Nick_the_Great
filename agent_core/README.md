@@ -99,8 +99,8 @@ The Agent Core Service tracks the following metrics for each experiment:
 
 ## Future Enhancements
 
-- **Persistent Storage**: Replace the in-memory storage with a persistent database (e.g., MongoDB).
+- **Enhanced State Persistence**: Improve persistence for operational states like pending approval workflows and active notification lifecycles to ensure full recovery across Agent Core restarts. (Core experiment data, logs, and metrics are already persisted via the backend service.)
 - **Enhanced Autonomy Framework**: Implement a more sophisticated decision matrix based on machine learning.
 - **Task Cancellation**: Improve the task cancellation mechanism to handle more complex tasks.
-- **Metrics Visualization**: Add a dashboard for visualizing experiment metrics.
+- **Metrics Visualization**: Add a dedicated dashboard for visualizing Agent Core internal metrics and advanced experiment diagnostics (beyond the current frontend dashboard capabilities).
 - **Security Enhancements**: Add authentication and authorization to the gRPC API.

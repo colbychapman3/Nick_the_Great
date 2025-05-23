@@ -49,27 +49,13 @@ export interface StatusResponse {
  * @returns {Promise<ExperimentStatus[]>} List of experiments
  */
 export async function fetchExperiments(): Promise<ExperimentStatus[]> {
-  const client = ApiClient();
+  const client = ApiClient(); // client.request is now available
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch experiments');
-    }
-
-    return await response.json();
+    // The client.request function handles token, headers, and base URL.
+    return await client.request('/agent/experiments', 'GET');
   } catch (error) {
+    // The error handling here catches errors thrown by client.request
+    // or any other errors during the process.
     console.error('Error fetching experiments:', error);
     throw error;
   }
@@ -83,24 +69,7 @@ export async function fetchExperiments(): Promise<ExperimentStatus[]> {
 export async function fetchExperimentDetails(id: string): Promise<ExperimentStatus> {
   const client = ApiClient();
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch experiment details');
-    }
-
-    return await response.json();
+    return await client.request(`/agent/experiments/${id}`, 'GET');
   } catch (error) {
     console.error(`Error fetching experiment ${id}:`, error);
     throw error;
@@ -115,25 +84,7 @@ export async function fetchExperimentDetails(id: string): Promise<ExperimentStat
 export async function createExperiment(definition: ExperimentDefinition): Promise<CreateExperimentResponse> {
   const client = ApiClient();
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-      body: JSON.stringify({ definition }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create experiment');
-    }
-
-    return await response.json();
+    return await client.request('/agent/experiments', 'POST', { definition });
   } catch (error) {
     console.error('Error creating experiment:', error);
     throw error;
@@ -148,24 +99,7 @@ export async function createExperiment(definition: ExperimentDefinition): Promis
 export async function startExperiment(id: string): Promise<StatusResponse> {
   const client = ApiClient();
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/start`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to start experiment');
-    }
-
-    return await response.json();
+    return await client.request(`/agent/experiments/${id}/start`, 'POST');
   } catch (error) {
     console.error(`Error starting experiment ${id}:`, error);
     throw error;
@@ -180,24 +114,7 @@ export async function startExperiment(id: string): Promise<StatusResponse> {
 export async function stopExperiment(id: string): Promise<StatusResponse> {
   const client = ApiClient();
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/stop`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to stop experiment');
-    }
-
-    return await response.json();
+    return await client.request(`/agent/experiments/${id}/stop`, 'POST');
   } catch (error) {
     console.error(`Error stopping experiment ${id}:`, error);
     throw error;
@@ -212,24 +129,7 @@ export async function stopExperiment(id: string): Promise<StatusResponse> {
 export async function fetchExperimentLogs(id: string): Promise<Array<{timestamp: string, level: string, message: string}>> {
   const client = ApiClient();
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/agent/experiments/${id}/logs`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch experiment logs');
-    }
-
-    return await response.json();
+    return await client.request(`/agent/experiments/${id}/logs`, 'GET');
   } catch (error) {
     console.error(`Error fetching logs for experiment ${id}:`, error);
     throw error;

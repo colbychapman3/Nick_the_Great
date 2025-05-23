@@ -5,6 +5,7 @@
 
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
+const fs = require('fs'); // Added fs module
 const path = require('path');
 const logger = require('./utils/logger');
 const databaseSyncService = require('./database_sync_service');
@@ -52,15 +53,40 @@ server.addService(dbSyncProto.DatabaseSyncService.service, {
  */
 function startServer(port = 50052) {
   return new Promise((resolve, reject) => {
-    server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (error, actualPort) => {
+    // TODO: Ensure 'server.key' and 'server.crt' are available in the specified path.
+    // These files are essential for TLS encryption.
+    // They should be provisioned securely to the server's environment.
+    // Assumed paths: backend/certs/server.key and backend/certs/server.crt
+    const keyPath = path.join(__dirname, '../certs/server.key');
+    const certPath = path.join(__dirname, '../certs/server.crt');
+    let serverCredentials;
+
+    try {
+      const privateKey = fs.readFileSync(keyPath);
+      const certificate = fs.readFileSync(certPath);
+      
+      serverCredentials = grpc.ServerCredentials.createSsl(null, [{ // null for root_certs means we don't require client certs
+        private_key: privateKey,
+        cert_chain: certificate
+      }]);
+      logger.info('Successfully loaded SSL certificates for gRPC server.');
+
+    } catch (err) {
+      logger.error(`Failed to load SSL certificates (server.key: ${keyPath}, server.crt: ${certPath}). gRPC server cannot start securely. Error: ${err.message}`);
+      // In a production scenario, prevent starting insecurely if certs are missing.
+      reject(new Error(`Required SSL certificates not found. gRPC server cannot start. Searched at: ${keyPath}, ${certPath}`));
+      return;
+    }
+
+    server.bindAsync(`0.0.0.0:${port}`, serverCredentials, (error, actualPort) => {
       if (error) {
-        logger.error(`Failed to start gRPC server: ${error.message}`);
+        logger.error(`Failed to start secure gRPC server: ${error.message}`);
         reject(error);
         return;
       }
       
       server.start();
-      logger.info(`gRPC server started on port ${actualPort}`);
+      logger.info(`Secure gRPC server started on port ${actualPort}`);
       resolve(actualPort);
     });
   });

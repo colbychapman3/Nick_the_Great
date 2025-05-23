@@ -44,7 +44,8 @@ class Notification:
     Represents a notification sent by the agent to a user.
     """
     
-    def __init__(self, 
+    def __init__(self,
+                 system: 'NotificationSystem', # Added reference to the system
                  title: str, 
                  message: str, 
                  notification_type: NotificationType, 
@@ -59,6 +60,7 @@ class Notification:
         Initialize a new notification.
         
         Args:
+            system: The NotificationSystem instance creating this notification.
             title: The notification title
             message: The notification message
             notification_type: The type of notification
@@ -86,6 +88,7 @@ class Notification:
         self.read_time = None
         self.action_taken = None
         self.action_time = None
+        self._system = system # Store reference to the system
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -114,17 +117,19 @@ class Notification:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Notification':
+    def from_dict(cls, system: 'NotificationSystem', data: Dict[str, Any]) -> 'Notification':
         """
         Create a notification from a dictionary.
         
         Args:
+            system: The NotificationSystem instance that will own this notification.
             data: The dictionary containing notification data
         
         Returns:
             Notification: The created notification
         """
         notification = cls(
+            system=system, # Pass the system instance
             title=data["title"],
             message=data["message"],
             notification_type=NotificationType(data["type"]),
@@ -146,8 +151,12 @@ class Notification:
     
     def mark_as_read(self) -> None:
         """Mark the notification as read."""
+        if self.status == NotificationStatus.READ:
+            return # Already read
         self.status = NotificationStatus.READ
         self.read_time = int(time.time())
+        if self._system:
+            self._system._notify_notification_updated(self)
     
     def take_action(self, action: str) -> bool:
         """
@@ -174,6 +183,8 @@ class Notification:
         self.action_taken = action
         self.action_time = int(time.time())
         self.status = NotificationStatus.ACTIONED
+        if self._system:
+            self._system._notify_notification_updated(self)
         return True
     
     def is_expired(self) -> bool:
@@ -193,11 +204,77 @@ class NotificationSystem:
     System for managing notifications in the agent.
     """
     
-    def __init__(self):
-        """Initialize the notification system."""
-        self.notifications = {}  # Dictionary of notification ID to Notification
+    def __init__(self, db_client: Optional[Any] = None):
+        """
+        Initialize the notification system.
+        
+        Args:
+            db_client: The database client for persistence.
+        """
+        self.db_client = db_client
+        self.notifications: Dict[str, Notification] = {}  # Dictionary of notification ID to Notification
+        
+        if self.db_client:
+            self._restore_unsynced_notifications()
+            
         logger.info("Notification System initialized")
-    
+
+    def _restore_unsynced_notifications(self):
+        """
+        Restore notifications from the database that might need further interaction or were not synced.
+        """
+        if not self.db_client:
+            return
+
+        logger.info("Attempting to restore notifications from database...")
+        try:
+            # TODO: Implement self.db_client.restore_notifications() in db_client.py
+            # This method should fetch notifications, potentially those that are not yet EXPIRED or ACTIONED.
+            # Example expected return: List[Dict[str, Any]]
+            restored_notifications_data = self.db_client.restore_notifications()
+            
+            if restored_notifications_data:
+                for notif_data in restored_notifications_data:
+                    try:
+                        # Pass 'self' as the system when reconstructing
+                        notification = Notification.from_dict(self, notif_data)
+                        
+                        # Only restore if not already handled or expired
+                        if notification.status not in [NotificationStatus.ACTIONED, NotificationStatus.EXPIRED] and \
+                           not notification.is_expired():
+                            self.notifications[notification.id] = notification
+                            logger.info(f"Restored notification {notification.id}")
+                        elif notification.status != NotificationStatus.EXPIRED and notification.is_expired():
+                            notification.status = NotificationStatus.EXPIRED # Mark as expired
+                            # And update in DB
+                            # TODO: Implement self.db_client.update_notification() in db_client.py
+                            self.db_client.update_notification(notification.id, notification.to_dict())
+                            logger.info(f"Restored and marked notification {notification.id} as EXPIRED.")
+                            
+                    except Exception as e:
+                        logger.error(f"Error reconstructing notification from data '{notif_data}': {e}")
+                logger.info(f"Successfully processed {len(restored_notifications_data)} restored notifications.")
+            else:
+                logger.info("No notifications found in database to restore.")
+        except AttributeError:
+            logger.warning("db_client does not have 'restore_notifications' method. Skipping restore.")
+        except Exception as e:
+            logger.error(f"Error restoring notifications from database: {e}")
+
+    def _notify_notification_updated(self, notification: Notification):
+        """
+        Called by a Notification object when its state changes, to sync to DB.
+        """
+        if self.db_client:
+            try:
+                # TODO: Implement self.db_client.update_notification(notification_id, notification_data) in db_client.py
+                self.db_client.update_notification(notification.id, notification.to_dict())
+                logger.info(f"Notification {notification.id} update synced with database.")
+            except AttributeError:
+                logger.warning(f"db_client does not have 'update_notification' method. Notification {notification.id} update not synced.")
+            except Exception as e:
+                logger.error(f"Error syncing notification {notification.id} update to database: {e}")
+            
     def create_notification(self, 
                            title: str, 
                            message: str, 
@@ -243,7 +320,19 @@ class NotificationSystem:
         self.notifications[notification.id] = notification
         logger.info(f"Created notification {notification.id}: {title}")
         
-        # TODO: Send notification to backend for delivery to users
+        # Persist the notification if db_client is available
+        if self.db_client:
+            try:
+                # TODO: Implement self.db_client.sync_notification(notification_data) in db_client.py
+                # This method should save the new notification to the database.
+                self.db_client.sync_notification(notification.to_dict())
+                logger.info(f"Notification {notification.id} synced with database.")
+            except AttributeError:
+                logger.warning(f"db_client does not have 'sync_notification' method. Notification {notification.id} not synced.")
+            except Exception as e:
+                logger.error(f"Error syncing notification {notification.id} to database: {e}")
+        
+        # TODO: Send notification to backend for delivery to users (this part remains)
         
         return notification
     

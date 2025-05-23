@@ -111,6 +111,7 @@ export function ApiClient() {
     getRecommendedStrategies,
     runSimulation,
     validateConfiguration,
-    getSystemHealth
+    getSystemHealth,
+    request // Expose the generic request function
   };
 }

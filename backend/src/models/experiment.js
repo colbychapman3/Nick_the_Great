@@ -27,7 +27,7 @@ const ExperimentSchema = new Schema({
     type: String,
     default: ''
   },
-  // Experiment type (maps to ExperimentType enum in proto)
+  // Task/Experiment type (maps to AgentTaskType enum in proto)
   type: {
     type: String,
     required: true,

@@ -2,6 +2,61 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { MongoClient, ObjectId } = require('mongodb');
 
+// --- JWT Secret Management ---
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  const nodeEnv = process.env.NODE_ENV;
+
+  if (!secret || secret.trim() === '') {
+    if (nodeEnv === 'production') {
+      // Log the error before throwing to ensure it's captured if the throw doesn't get caught well upstream
+      console.error('CRITICAL: JWT_SECRET environment variable is not set in production. Application cannot safely start.');
+      throw new Error('CRITICAL: JWT_SECRET environment variable is not set in production.');
+    } else {
+      console.warn(`
+        ****************************************************************************************
+        WARNING: JWT_SECRET environment variable is not set or is empty.
+        Using a default, insecure secret for development/testing purposes ONLY.
+        Ensure JWT_SECRET is properly configured for production environments.
+        Current NODE_ENV: ${nodeEnv}
+        ****************************************************************************************
+      `);
+      return 'unsafe_dev_jwt_secret_do_not_use_in_prod_!@#$%^&*()_+'; // A clearly insecure, verbose default
+    }
+  }
+  // Optional: Add a check for weak secrets in production if desired
+  // if (nodeEnv === 'production' && secret.length < 32) { // Example: minimum length
+  //   console.error('CRITICAL: JWT_SECRET in production is too weak. Please use a strong, random secret.');
+  //   throw new Error('CRITICAL: JWT_SECRET in production is too weak.');
+  // }
+  return secret;
+}
+
+// Perform an initial check when the module is loaded.
+// This will throw an error immediately in production if JWT_SECRET is not set.
+try {
+  getJwtSecret(); 
+  console.log("JWT Secret check passed successfully during initialization.");
+} catch (error) {
+  // If in production, this error should ideally prevent the app from starting.
+  // How this is handled depends on the application's startup lifecycle.
+  // For now, console.error is the primary feedback here.
+  console.error(`JWT Secret initialization check failed: ${error.message}`);
+  // Re-throwing or process.exit(1) might be appropriate in some frameworks
+  // if this module load is a critical part of startup.
+  // For this exercise, we assume the error thrown by getJwtSecret() is sufficient.
+}
+
+// NOTE ON DATABASE INTERACTION:
+// This module (auth.js) uses the native MongoDB driver for database operations.
+// Other parts of the backend (e.g., ExperimentService) use Mongoose as an ODM.
+// For future architectural consistency, consideration could be given to migrating
+// user and configuration data management in this module to also use Mongoose schemas
+// and models. However, the current native driver usage is functional.
+// This would involve defining Mongoose schemas for 'users' and 'configurations'
+// collections and refactoring the database functions (registerUser, loginUser, etc.)
+// to use Mongoose model methods.
+
 // MongoDB connection
 let db;
 const mongoUri = process.env.MONGODB_URI || 'mongodb://mongo:27017/nick_agent';
@@ -99,7 +154,7 @@ async function loginUser(credentials) {
       role: user.role
     };
     
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'local_development_secret', {
+    const token = jwt.sign(payload, getJwtSecret(), {
       expiresIn: '24h'
     });
     
@@ -205,7 +260,7 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ message: 'Authentication required' });
   }
   
-  jwt.verify(token, process.env.JWT_SECRET || 'local_development_secret', (err, user) => {
+  jwt.verify(token, getJwtSecret(), (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
